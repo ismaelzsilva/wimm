@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WIMM - {% block title %}Where Is My Money{% endblock %}</title>
+    <title>{% block title %}Where Is My Money{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css"/>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
@@ -23,7 +23,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                 </svg>
             </label>
-            <a href="{% url 'dashboard' %}" class="btn btn-ghost text-xl">WIMM</a>
+            <a href="{% url 'dashboard' %}" class="btn btn-ghost text-xl">WhereIsMyMoney?</a>
         </div>
         <div class="navbar-center hidden lg:flex">
             <ul class="menu menu-horizontal px-1">

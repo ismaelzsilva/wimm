@@ -4,16 +4,8 @@
 
 {% block content %}
     <div class="flex flex-col gap-6">
-        <div class="flex items-center justify-between">
-            <h1 class="text-3xl font-bold">Dashboard</h1>
-            <a href="{% url 'wallet_create' %}" class="btn btn-primary"
-               hx-get="{% url 'wallet_create' %}" hx-target="#modal-content"
-               hx-trigger="click" onclick="document.getElementById('modal').showModal()">
-                + New Wallet
-            </a>
-        </div>
 
-        <div class="stats shadow">
+        <div class="stats bg-base-100 border border-base-300 shadow">
             <div class="stat">
                 <div class="stat-title">Total Balance</div>
                 <div class="stat-value {% if total_balance < 0 %}text-error{% endif %}">
@@ -35,6 +27,14 @@
                     </a>
                 </div>
             {% endfor %}
+        </div>
+
+        <div>
+            <a href="{% url 'wallet_create' %}" class="btn btn-primary"
+               hx-get="{% url 'wallet_create' %}" hx-target="#modal-content"
+               hx-trigger="click" onclick="document.getElementById('modal').showModal()">
+                + New Wallet
+            </a>
         </div>
     </div>
 
