@@ -1,0 +1,21 @@
+<div class="card bg-base-100 shadow-sm">
+    <div class="card-body">
+        <h2 class="card-title">Monthly Summary — {{ year }}/{{ month }}</h2>
+        <div class="stats shadow">
+            <div class="stat">
+                <div class="stat-title">Income</div>
+                <div class="stat-value text-success">${{ summary.income|floatformat:2 }}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-title">Expenses</div>
+                <div class="stat-value text-error">${{ summary.expenses|floatformat:2 }}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-title">Net</div>
+                <div class="stat-value {% if summary.net < 0 %}text-error{% else %}text-success{% endif %}">
+                    ${{ summary.net|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

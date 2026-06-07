@@ -1,0 +1,72 @@
+{% extends "wallet/base.html" %}
+
+{% block title %}Transfer{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-6">
+    <h1 class="text-3xl font-bold">Transfer Between Wallets</h1>
+
+    <div class="card bg-base-100 shadow-sm max-w-lg">
+        <div class="card-body">
+            <form method="post" hx-post="{% url 'transfer_create' %}" hx-target="body">
+                {% csrf_token %}
+
+                <div class="form-control">
+                    <label class="label" for="from_wallet"><span class="label-text">From Wallet</span></label>
+                    <select name="from_wallet" id="from_wallet" class="select select-bordered" required>
+                        <option value="">Select wallet</option>
+                        {% for wallet in wallets %}
+                        <option value="{{ wallet.uuid }}">{{ wallet.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-control mt-2">
+                    <label class="label" for="to_wallet"><span class="label-text">To Wallet</span></label>
+                    <select name="to_wallet" id="to_wallet" class="select select-bordered" required>
+                        <option value="">Select wallet</option>
+                        {% for wallet in wallets %}
+                        <option value="{{ wallet.uuid }}">{{ wallet.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-control mt-2">
+                    <label class="label" for="amount"><span class="label-text">Amount</span></label>
+                    <input type="number" step="0.01" min="0.01" name="amount" id="amount"
+                           class="input input-bordered" required autofocus>
+                </div>
+
+                <div class="form-control mt-2">
+                    <label class="label" for="description"><span class="label-text">Description</span></label>
+                    <input type="text" name="description" id="description" class="input input-bordered">
+                </div>
+
+                <div class="form-control mt-2">
+                    <label class="label" for="date"><span class="label-text">Date</span></label>
+                    <input type="date" name="date" id="date" class="input input-bordered"
+                           value="{% now 'Y-m-d' %}">
+                </div>
+
+                <div class="form-control mt-2">
+                    <label class="label" for="category"><span class="label-text">Category</span></label>
+                    <select name="category" id="category" class="select select-bordered">
+                        <option value="">None</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.uuid }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {% if error %}
+                <div class="alert alert-error mt-4 text-sm">{{ error }}</div>
+                {% endif %}
+
+                <div class="form-control mt-6">
+                    <button type="submit" class="btn btn-primary">Transfer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

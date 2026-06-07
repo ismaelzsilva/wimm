@@ -1,0 +1,50 @@
+<form method="post"
+      hx-post="{% if transaction %}{% url 'transaction_update' wallet.uuid transaction.uuid %}{% else %}{% url 'transaction_create' wallet.uuid %}{% endif %}"
+      hx-target="body">
+    {% csrf_token %}
+    <h3 class="text-lg font-bold mb-4">
+        {% if transaction %}Edit Transaction{% else %}New {{ type|title }}{% endif %}
+    </h3>
+
+    <input type="hidden" name="type" value="{% if transaction %}{{ transaction.type }}{% else %}{{ type }}{% endif %}">
+
+    <div class="form-control">
+        <label class="label" for="amount"><span class="label-text">Amount</span></label>
+        <input type="number" step="0.01" min="0.01" name="amount" id="amount"
+               class="input input-bordered"
+               value="{{ transaction.amount|default:'' }}" required autofocus>
+    </div>
+
+    <div class="form-control mt-2">
+        <label class="label" for="description"><span class="label-text">Description</span></label>
+        <input type="text" name="description" id="description" class="input input-bordered"
+               value="{{ transaction.description|default:'' }}">
+    </div>
+
+    <div class="form-control mt-2">
+        <label class="label" for="date"><span class="label-text">Date</span></label>
+        <input type="date" name="date" id="date" class="input input-bordered"
+               value="{% if transaction %}{{ transaction.date|date:'Y-m-d' }}{% else %}{% now 'Y-m-d' %}{% endif %}">
+    </div>
+
+    <div class="form-control mt-2">
+        <label class="label" for="category"><span class="label-text">Category</span></label>
+        <select name="category" id="category" class="select select-bordered">
+            <option value="">None</option>
+            {% for cat in categories %}
+            <option value="{{ cat.uuid }}" {% if transaction and transaction.category == cat %}selected{% endif %}>
+                {{ cat.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-error mt-4 text-sm">{{ error }}</div>
+    {% endif %}
+
+    <div class="modal-action">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn" onclick="document.getElementById('modal').close()">Cancel</button>
+    </div>
+</form>

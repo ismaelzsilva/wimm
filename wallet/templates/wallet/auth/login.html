@@ -1,0 +1,33 @@
+{% extends "wallet/base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-[70vh]">
+    <div class="card bg-base-100 w-full max-w-sm shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title text-2xl mb-4">Login</h2>
+            <form method="post" hx-post="{% url 'login' %}" hx-target="body">
+                {% csrf_token %}
+                <div class="form-control">
+                    <label class="label" for="username"><span class="label-text">Username</span></label>
+                    <input type="text" name="username" id="username" class="input input-bordered" required autofocus>
+                </div>
+                <div class="form-control mt-2">
+                    <label class="label" for="password"><span class="label-text">Password</span></label>
+                    <input type="password" name="password" id="password" class="input input-bordered" required>
+                </div>
+                {% if error %}
+                <div class="alert alert-error mt-4 text-sm">{{ error }}</div>
+                {% endif %}
+                <div class="form-control mt-6">
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </div>
+            </form>
+            <p class="text-center text-sm mt-4">
+                Don't have an account? <a href="{% url 'signup' %}" class="link link-primary">Sign up</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

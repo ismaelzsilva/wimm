@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="cupcake">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WIMM - {% block title %}Where Is My Money{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen bg-base-200">
+    {% if user.is_authenticated %}
+    <div class="navbar bg-base-100 shadow-sm mb-4">
+        <div class="navbar-start">
+            <a href="{% url 'dashboard' %}" class="btn btn-ghost text-xl">WIMM</a>
+        </div>
+        <div class="navbar-center hidden lg:flex">
+            <ul class="menu menu-horizontal px-1">
+                <li><a href="{% url 'wallet_list' %}">Wallets</a></li>
+                <li><a href="{% url 'transfer_create' %}">Transfer</a></li>
+                <li><a href="{% url 'category_list' %}">Categories</a></li>
+                <li><a href="{% url 'reports_index' %}">Reports</a></li>
+            </ul>
+        </div>
+        <div class="navbar-end gap-2">
+            <span class="text-sm">{{ user.username }}</span>
+            <a href="{% url 'logout' %}" class="btn btn-ghost btn-sm"
+               hx-get="{% url 'logout' %}" hx-trigger="click" hx-target="body">Logout</a>
+        </div>
+    </div>
+    {% endif %}
+
+    <main class="container mx-auto px-4 max-w-5xl" id="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

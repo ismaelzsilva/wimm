@@ -1,0 +1,36 @@
+{% extends "wallet/base.html" %}
+
+{% block title %}Wallets{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-3xl font-bold">Wallets</h1>
+        <a href="{% url 'wallet_create' %}" class="btn btn-primary"
+           hx-get="{% url 'wallet_create' %}" hx-target="#modal-content"
+           hx-trigger="click" onclick="document.getElementById('modal').showModal()">
+            + New Wallet
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for wallet, balance in wallet_balances %}
+            {% include "wallet/wallet/_card.html" with wallet=wallet balance=balance %}
+        {% empty %}
+            <div class="col-span-full text-center py-12 text-base-content/60">
+                <p class="text-lg">No wallets yet.</p>
+                <a href="{% url 'wallet_create' %}" class="btn btn-primary mt-4"
+                   hx-get="{% url 'wallet_create' %}" hx-target="#modal-content"
+                   hx-trigger="click" onclick="document.getElementById('modal').showModal()">
+                    Create your first wallet
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<dialog id="modal" class="modal">
+    <div class="modal-box" id="modal-content"></div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+{% endblock %}

@@ -1,0 +1,11 @@
+<form method="post"
+      hx-post="{% url 'category_delete' category.uuid %}"
+      hx-target="body">
+    {% csrf_token %}
+    <h3 class="text-lg font-bold mb-4">Delete Category</h3>
+    <p>Are you sure you want to delete <strong>{{ category.name }}</strong>?</p>
+    <div class="modal-action">
+        <button type="submit" class="btn btn-error">Delete</button>
+        <button type="button" class="btn" onclick="document.getElementById('modal').close()">Cancel</button>
+    </div>
+</form>
