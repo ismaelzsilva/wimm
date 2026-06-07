@@ -58,6 +58,51 @@ class WalletTransactionService:
             date=date,
         )
 
+    @classmethod
+    def get_transaction(cls, uuid) -> Transaction:
+        return Transaction.objects.get(uuid=uuid)
+
+    @classmethod
+    def list_transactions(
+        cls,
+        wallet: Wallet,
+        type: str | None = None,
+        date_from=None,
+        date_to=None,
+    ) -> models.QuerySet:
+        qs = Transaction.objects.filter(wallet=wallet).order_by("-date", "-created_at")
+
+        if type:
+            qs = qs.filter(type=type)
+        if date_from:
+            qs = qs.filter(date__gte=date_from)
+        if date_to:
+            qs = qs.filter(date__lte=date_to)
+
+        return qs
+
+    @classmethod
+    def delete_transaction(cls, transaction: Transaction) -> None:
+        if transaction.transfer_group_id:
+            raise ValidationError(
+                "Cannot delete a transfer transaction directly. "
+                "Use TransferService.reverse_transfer to undo the entire transfer."
+            )
+
+        if transaction.type in (
+            Transaction.Type.INCOME,
+            Transaction.Type.TRANSFER_IN,
+        ):
+            balance = WalletBalanceService.get_balance(transaction.wallet)
+            new_balance = balance - transaction.amount
+            if not transaction.wallet.can_be_negative and new_balance < 0:
+                raise ValidationError(
+                    f"Cannot delete this {transaction.type}. "
+                    f"New balance would be {new_balance}."
+                )
+
+        transaction.delete()
+
 
 class TransferService:
     @classmethod
@@ -99,3 +144,61 @@ class TransferService:
             )
 
         return group
+
+    @classmethod
+    def reverse_transfer(cls, transfer_group: TransferGroup) -> None:
+        transactions = list(transfer_group.transactions.select_related("wallet"))
+
+        if not transactions:
+            raise ValidationError("Transfer group has no transactions")
+
+        for transaction in transactions:
+            if transaction.type == Transaction.Type.TRANSFER_IN:
+                balance = WalletBalanceService.get_balance(transaction.wallet)
+                new_balance = balance - transaction.amount
+                if not transaction.wallet.can_be_negative and new_balance < 0:
+                    raise ValidationError(
+                        f"Cannot reverse transfer. "
+                        f"'{transaction.wallet.name}' would have a negative balance of {new_balance}."
+                    )
+
+        with db_transaction.atomic():
+            for transaction in transactions:
+                transaction.delete()
+            transfer_group.delete()
+
+
+class WalletService:
+    @classmethod
+    def create_wallet(cls, owner, name, can_be_negative=False) -> Wallet:
+        return Wallet.objects.create(
+            owner=owner, name=name, can_be_negative=can_be_negative
+        )
+
+    @classmethod
+    def list_wallets(cls, owner) -> models.QuerySet:
+        return Wallet.objects.filter(owner=owner)
+
+    @classmethod
+    def update_wallet(
+        cls,
+        wallet: Wallet,
+        name: str | None = None,
+        can_be_negative: bool | None = None,
+    ) -> Wallet:
+        if name is not None:
+            wallet.name = name
+        if can_be_negative is not None:
+            wallet.can_be_negative = can_be_negative
+        wallet.save(update_fields=["name", "can_be_negative"])
+        return wallet
+
+    @classmethod
+    def delete_wallet(cls, wallet: Wallet) -> None:
+        balance = WalletBalanceService.get_balance(wallet)
+        if balance != 0:
+            raise ValidationError(
+                f"Cannot delete wallet with non-zero balance ({balance}). "
+                "Move the money elsewhere first."
+            )
+        wallet.delete()
