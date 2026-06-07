@@ -5,13 +5,57 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from accounts.models import CustomUser
-from wallet.models import Transaction, TransferGroup, Wallet
+from wallet.models import Category, Transaction, TransferGroup, Wallet
 from wallet.services import (
+    CategoryService,
     TransferService,
     WalletBalanceService,
     WalletService,
     WalletTransactionService,
 )
+
+
+class CategoryServiceTests(TestCase):
+    def setUp(self):
+        self.user = CustomUser.objects.create_user(
+            username="testuser", password="pass"
+        )
+        self.other = CustomUser.objects.create_user(
+            username="other", password="pass"
+        )
+
+    def test_create_category(self):
+        cat = CategoryService.create_category(owner=self.user, name="Food")
+        self.assertEqual(cat.name, "Food")
+        self.assertEqual(cat.owner, self.user)
+
+    def test_list_categories(self):
+        CategoryService.create_category(owner=self.user, name="A")
+        CategoryService.create_category(owner=self.user, name="B")
+        CategoryService.create_category(owner=self.other, name="C")
+        cats = CategoryService.list_categories(owner=self.user)
+        self.assertEqual(list(cats.values_list("name", flat=True)), ["A", "B"])
+
+    def test_update_category(self):
+        cat = CategoryService.create_category(owner=self.user, name="Old")
+        CategoryService.update_category(cat, name="Renamed")
+        cat.refresh_from_db()
+        self.assertEqual(cat.name, "Renamed")
+
+    def test_delete_category(self):
+        cat = CategoryService.create_category(owner=self.user, name="Temp")
+        CategoryService.delete_category(cat)
+        self.assertFalse(Category.objects.filter(uuid=cat.uuid).exists())
+
+    def test_unique_category_per_user(self):
+        CategoryService.create_category(owner=self.user, name="Food")
+        with self.assertRaises(Exception):
+            CategoryService.create_category(owner=self.user, name="Food")
+
+    def test_same_name_different_users(self):
+        CategoryService.create_category(owner=self.user, name="Food")
+        cat = CategoryService.create_category(owner=self.other, name="Food")
+        self.assertIsNotNone(cat.uuid)
 
 
 class WalletServiceTests(TestCase):
@@ -417,6 +461,81 @@ class WalletTransactionServiceTests(TestCase):
         with self.assertRaises(ValidationError):
             WalletTransactionService.delete_transaction(tx)
 
+    def test_record_income_with_category(self):
+        cat = CategoryService.create_category(owner=self.user, name="Salary")
+        tx = WalletTransactionService.record_income(
+            wallet=self.wallet,
+            amount=Decimal("100"),
+            description="",
+            date=date.today(),
+            category=cat,
+        )
+        self.assertEqual(tx.category, cat)
+
+    def test_record_expense_with_category(self):
+        cat = CategoryService.create_category(owner=self.user, name="Food")
+        WalletTransactionService.record_income(
+            wallet=self.wallet,
+            amount=Decimal("100"),
+            description="",
+            date=date.today(),
+        )
+        tx = WalletTransactionService.record_expense(
+            wallet=self.wallet,
+            balance=Decimal("100"),
+            amount=Decimal("30"),
+            description="",
+            date=date.today(),
+            category=cat,
+        )
+        self.assertEqual(tx.category, cat)
+
+    def test_list_transactions_filter_category(self):
+        food = CategoryService.create_category(owner=self.user, name="Food")
+        transport = CategoryService.create_category(
+            owner=self.user, name="Transport"
+        )
+        WalletTransactionService.record_income(
+            wallet=self.wallet,
+            amount=Decimal("100"),
+            description="",
+            date=date.today(),
+        )
+        WalletTransactionService.record_expense(
+            wallet=self.wallet,
+            balance=Decimal("100"),
+            amount=Decimal("20"),
+            description="",
+            date=date.today(),
+            category=food,
+        )
+        WalletTransactionService.record_expense(
+            wallet=self.wallet,
+            balance=Decimal("80"),
+            amount=Decimal("10"),
+            description="",
+            date=date.today(),
+            category=transport,
+        )
+        qs = WalletTransactionService.list_transactions(
+            wallet=self.wallet, category=food
+        )
+        self.assertEqual(qs.count(), 1)
+        self.assertEqual(qs.first().category, food)
+
+    def test_delete_category_sets_null_on_transactions(self):
+        cat = CategoryService.create_category(owner=self.user, name="Food")
+        WalletTransactionService.record_income(
+            wallet=self.wallet,
+            amount=Decimal("100"),
+            description="",
+            date=date.today(),
+            category=cat,
+        )
+        CategoryService.delete_category(cat)
+        tx = Transaction.objects.get(wallet=self.wallet)
+        self.assertIsNone(tx.category)
+
 
 class TransferServiceTests(TestCase):
     def setUp(self):
@@ -480,6 +599,20 @@ class TransferServiceTests(TestCase):
                 description="",
                 date=date.today(),
             )
+
+    def test_transfer_with_category(self):
+        cat = CategoryService.create_category(owner=self.user, name="Gift")
+        group = TransferService.transfer(
+            from_wallet=self.from_wallet,
+            to_wallet=self.to_wallet,
+            balance=Decimal("200"),
+            amount=Decimal("50"),
+            description="",
+            date=date.today(),
+            category=cat,
+        )
+        for tx in group.transactions.all():
+            self.assertEqual(tx.category, cat)
 
     def test_transfer_can_be_negative(self):
         credit_wallet = WalletService.create_wallet(
