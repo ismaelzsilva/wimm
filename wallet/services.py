@@ -70,7 +70,7 @@ class WalletTransactionService:
         date_from=None,
         date_to=None,
     ) -> models.QuerySet:
-        qs = Transaction.objects.filter(wallet=wallet).order_by("-date", "-created_at")
+        qs = Transaction.objects.filter(wallet=wallet).order_by("-date", "-uuid")
 
         if type:
             qs = qs.filter(type=type)
