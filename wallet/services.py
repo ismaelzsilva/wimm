@@ -3,7 +3,27 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.db import models, transaction as db_transaction
 
-from .models import Transaction, TransferGroup, Wallet
+from .models import Category, Transaction, TransferGroup, Wallet
+
+
+class CategoryService:
+    @classmethod
+    def create_category(cls, owner, name) -> Category:
+        return Category.objects.create(owner=owner, name=name)
+
+    @classmethod
+    def list_categories(cls, owner) -> models.QuerySet:
+        return Category.objects.filter(owner=owner).order_by("name")
+
+    @classmethod
+    def update_category(cls, category: Category, name: str) -> Category:
+        category.name = name
+        category.save(update_fields=["name"])
+        return category
+
+    @classmethod
+    def delete_category(cls, category: Category) -> None:
+        category.delete()
 
 
 class WalletBalanceService:
@@ -25,7 +45,12 @@ class WalletBalanceService:
 class WalletTransactionService:
     @classmethod
     def record_income(
-        cls, wallet: Wallet, amount: Decimal, description: str | None, date
+        cls,
+        wallet: Wallet,
+        amount: Decimal,
+        description: str | None,
+        date,
+        category: Category | None = None,
     ) -> Transaction:
         return Transaction.objects.create(
             type=Transaction.Type.INCOME,
@@ -33,6 +58,7 @@ class WalletTransactionService:
             amount=amount,
             description=description,
             date=date,
+            category=category,
         )
 
     @classmethod
@@ -43,6 +69,7 @@ class WalletTransactionService:
         amount: Decimal,
         description: str | None,
         date,
+        category: Category | None = None,
     ) -> Transaction:
         if not wallet.can_be_negative:
             if amount > balance:
@@ -56,6 +83,7 @@ class WalletTransactionService:
             amount=amount,
             description=description,
             date=date,
+            category=category,
         )
 
     @classmethod
@@ -69,6 +97,7 @@ class WalletTransactionService:
         type: str | None = None,
         date_from=None,
         date_to=None,
+        category: Category | None = None,
     ) -> models.QuerySet:
         qs = Transaction.objects.filter(wallet=wallet).order_by("-date", "-uuid")
 
@@ -78,6 +107,8 @@ class WalletTransactionService:
             qs = qs.filter(date__gte=date_from)
         if date_to:
             qs = qs.filter(date__lte=date_to)
+        if category:
+            qs = qs.filter(category=category)
 
         return qs
 
@@ -114,6 +145,7 @@ class TransferService:
         amount: Decimal,
         description: str | None,
         date,
+        category: Category | None = None,
     ) -> TransferGroup:
         if from_wallet == to_wallet:
             raise ValidationError("Cannot transfer to the same wallet")
@@ -133,6 +165,7 @@ class TransferService:
                 description=description,
                 date=date,
                 transfer_group=group,
+                category=category,
             )
             Transaction.objects.create(
                 type=Transaction.Type.TRANSFER_IN,
@@ -141,6 +174,7 @@ class TransferService:
                 description=description,
                 date=date,
                 transfer_group=group,
+                category=category,
             )
 
         return group
