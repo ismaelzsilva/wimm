@@ -13,5 +13,4 @@ class WalletAdmin(admin.ModelAdmin):
     )
     search_fields = ("name", "owner__username")
     list_filter = ("updated_at",)
-
     readonly_fields = ("created_at", "updated_at")
