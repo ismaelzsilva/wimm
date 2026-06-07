@@ -8,7 +8,7 @@ from django.utils.functional import (
 
 
 class BaseModel(models.Model):
-    uuid = models.UUIDField(default=uuid.uuid7, primary_key=True)
+    uuid = models.UUIDField(default=uuid.uuid7, primary_key=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
