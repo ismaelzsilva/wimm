@@ -3,26 +3,27 @@
         <form hx-get="{% url 'wallet_detail' wallet.uuid %}"
               hx-target="#transaction-list"
               hx-swap="outerHTML"
-              class="flex flex-wrap gap-2 items-end">
+              class="flex flex-row gap-1">
             <input type="hidden" name="type" value="{{ request.GET.type }}">
-            <div class="form-control">
-                <label class="label py-1"><span class="label-text text-xs">From</span></label>
+            <div class="form-control flex-1">
                 <input type="date" name="date_from" class="input input-bordered input-xs"
                        value="{{ request.GET.date_from }}">
             </div>
-            <div class="form-control">
-                <label class="label py-1"><span class="label-text text-xs">To</span></label>
+            <span class="text-xxs">
+                -
+            </span>
+            <div class="form-control flex-1">
                 <input type="date" name="date_to" class="input input-bordered input-xs"
                        value="{{ request.GET.date_to }}">
             </div>
-            <div class="form-control">
-                <label class="label py-1"><span class="label-text text-xs">Category</span></label>
+            <div class="form-control flex-none">
                 <select name="category" class="select select-bordered select-xs">
                     <option value="">All</option>
                     {% for cat in categories %}
-                    <option value="{{ cat.uuid }}" {% if request.GET.category == cat.uuid|stringformat:"s" %}selected{% endif %}>
-                        {{ cat.name }}
-                    </option>
+                        <option value="{{ cat.uuid }}"
+                                {% if request.GET.category == cat.uuid|stringformat:"s" %}selected{% endif %}>
+                            {{ cat.name }}
+                        </option>
                     {% endfor %}
                 </select>
             </div>
@@ -33,24 +34,24 @@
     <div class="overflow-x-auto">
         <table class="table table-zebra">
             <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Description</th>
-                    <th>Category</th>
-                    <th class="text-right">Amount</th>
-                    <th class="text-center">Actions</th>
-                </tr>
+            <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Category</th>
+                <th class="text-right">Amount</th>
+                <th class="text-center">Actions</th>
+            </tr>
             </thead>
             <tbody>
-                {% for tx in transactions %}
+            {% for tx in transactions %}
                 <tr>
                     <td class="text-sm">{{ tx.date|date:"Y-m-d" }}</td>
                     <td>{{ tx.description|default:"—" }}</td>
                     <td>
                         {% if tx.category %}
-                        <span class="badge badge-ghost badge-sm">{{ tx.category.name }}</span>
+                            <span class="badge badge-ghost badge-sm">{{ tx.category.name }}</span>
                         {% else %}
-                        <span class="text-base-content/40">—</span>
+                            <span class="text-base-content/40">—</span>
                         {% endif %}
                     </td>
                     <td class="text-right font-medium
@@ -61,30 +62,30 @@
                     </td>
                     <td class="text-center">
                         {% if tx.type == 'income' or tx.type == 'expense' %}
-                        <a href="{% url 'transaction_update' wallet.uuid tx.uuid %}"
-                           class="btn btn-ghost btn-xs"
-                           hx-get="{% url 'transaction_update' wallet.uuid tx.uuid %}"
-                           hx-target="#modal-content" hx-trigger="click"
-                           onclick="document.getElementById('modal').showModal()">
-                            Edit
-                        </a>
-                        <a href="{% url 'transaction_delete' wallet.uuid tx.uuid %}"
-                           class="btn btn-ghost btn-xs text-error"
-                           hx-get="{% url 'transaction_delete' wallet.uuid tx.uuid %}"
-                           hx-target="#modal-content" hx-trigger="click"
-                           onclick="document.getElementById('modal').showModal()">
-                            Delete
-                        </a>
+                            <a href="{% url 'transaction_update' wallet.uuid tx.uuid %}"
+                               class="btn btn-ghost btn-xs"
+                               hx-get="{% url 'transaction_update' wallet.uuid tx.uuid %}"
+                               hx-target="#modal-content" hx-trigger="click"
+                               onclick="document.getElementById('modal').showModal()">
+                                Edit
+                            </a>
+                            <a href="{% url 'transaction_delete' wallet.uuid tx.uuid %}"
+                               class="btn btn-ghost btn-xs text-error"
+                               hx-get="{% url 'transaction_delete' wallet.uuid tx.uuid %}"
+                               hx-target="#modal-content" hx-trigger="click"
+                               onclick="document.getElementById('modal').showModal()">
+                                Delete
+                            </a>
                         {% else %}
-                        <span class="text-xs text-base-content/40">Transfer</span>
+                            <span class="text-xs text-base-content/40">Transfer</span>
                         {% endif %}
                     </td>
                 </tr>
-                {% empty %}
+            {% empty %}
                 <tr>
                     <td colspan="5" class="text-center py-8 text-base-content/40">No transactions yet.</td>
                 </tr>
-                {% endfor %}
+            {% endfor %}
             </tbody>
         </table>
     </div>
