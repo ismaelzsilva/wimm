@@ -464,6 +464,3 @@ def category_delete(request, uuid):
     return render(
         request, "wallet/category/_confirm_delete.html", {"category": category}
     )
-
-
-
