@@ -4,14 +4,26 @@ from django.contrib import admin
 from django.template.defaultfilters import date as date_filter
 from django.utils.html import format_html
 
-from wallet.models import Transaction, TransferGroup, Wallet
+from wallet.models import Category, Transaction, TransferGroup, Wallet
 from wallet.services import WalletBalanceService
+
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ("name", "owner", "transaction_count")
+    search_fields = ("name", "owner__username")
+    list_filter = ("owner",)
+    readonly_fields = ("transaction_count",)
+
+    @admin.display(description="Transactions")
+    def transaction_count(self, obj):
+        return obj.transactions.count()
 
 
 class TransactionInline(admin.TabularInline):
     model = Transaction
-    fields = ("type", "wallet", "amount", "date", "description")
-    readonly_fields = ("type", "wallet", "amount", "date", "description")
+    fields = ("type", "wallet", "amount", "date", "description", "category")
+    readonly_fields = ("type", "wallet", "amount", "date", "description", "category")
     extra = 0
     max_num = 0
     can_delete = False
@@ -22,8 +34,8 @@ class TransactionInline(admin.TabularInline):
 
 class WalletTransactionInline(admin.TabularInline):
     model = Transaction
-    fields = ("type", "amount", "date", "description")
-    readonly_fields = ("type", "amount", "date", "description")
+    fields = ("type", "amount", "date", "description", "category")
+    readonly_fields = ("type", "amount", "date", "description", "category")
     extra = 0
     max_num = 0
     can_delete = False
@@ -69,10 +81,11 @@ class TransactionAdmin(admin.ModelAdmin):
         "type",
         "display_amount",
         "date",
+        "category",
         "short_description",
         "transfer_group_link",
     )
-    list_filter = ("type", "date", "wallet")
+    list_filter = ("type", "date", "wallet", "category")
     search_fields = ("description", "wallet__name", "wallet__owner__username")
     readonly_fields = ("uuid", "updated_at", "display_created_at")
     fields = (
@@ -81,6 +94,7 @@ class TransactionAdmin(admin.ModelAdmin):
         "amount",
         "description",
         "date",
+        "category",
         "transfer_group",
         "uuid",
         "display_created_at",
