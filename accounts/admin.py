@@ -14,6 +14,7 @@ class CustomUserAdmin(UserAdmin):
         "username",
         "is_staff",
         "is_active",
+        "date_joined",
     ]
 
 
