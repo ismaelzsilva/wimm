@@ -1,6 +1,6 @@
 <div id="wallet-content" class="flex flex-col gap-6">
     {% if error %}
-    <div class="alert alert-error text-sm">{{ error }}</div>
+        <div class="alert alert-error text-sm">{{ error }}</div>
     {% endif %}
     <div class="stats shadow">
         <div class="stat">
@@ -11,16 +11,16 @@
         </div>
     </div>
 
-    <div class="flex flex-wrap gap-2 items-center">
+    <div class="flex flex-wrap w-full gap-2 items-center">
         <a href="{% url 'transaction_create' wallet.uuid %}?type=income"
-           class="btn btn-success btn-sm"
+           class="btn btn-success btn-sm grow"
            hx-get="{% url 'transaction_create' wallet.uuid %}?type=income"
            hx-target="#modal-content" hx-trigger="click"
            onclick="document.getElementById('modal').showModal()">
             + Income
         </a>
         <a href="{% url 'transaction_create' wallet.uuid %}?type=expense"
-           class="btn btn-error btn-sm"
+           class="btn btn-error btn-sm grow"
            hx-get="{% url 'transaction_create' wallet.uuid %}?type=expense"
            hx-target="#modal-content" hx-trigger="click"
            onclick="document.getElementById('modal').showModal()">
@@ -33,11 +33,11 @@
     </div>
 
     {% if other_wallets %}
-    <div class="card bg-base-100 shadow-sm">
-        <div class="card-body py-4">
-            <h3 class="card-title text-sm mb-2">Fast Transfer</h3>
-            {% include "wallet/transfer/_fast_form.html" %}
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body py-4">
+                <h3 class="card-title text-sm mb-2">Fast Transfer</h3>
+                {% include "wallet/transfer/_fast_form.html" %}
+            </div>
         </div>
-    </div>
     {% endif %}
 </div>
