@@ -341,19 +341,12 @@ def transaction_delete(request, wallet_uuid, uuid):
 def wallet_transfer_fast(request, uuid):
     wallet = get_object_or_404(Wallet, uuid=uuid, owner=request.user)
     other_wallets = WalletService.list_wallets(request.user).exclude(uuid=wallet.uuid)
-    categories = CategoryService.list_categories(request.user)
 
     if request.method == "POST":
         to_wallet_uuid = request.POST.get("to_wallet")
         amount = Decimal(request.POST["amount"])
         description = request.POST.get("description", "")
         tx_date = request.POST.get("date", date.today())
-        category_uuid = request.POST.get("category")
-        category = (
-            get_object_or_404(Category, uuid=category_uuid, owner=request.user)
-            if category_uuid
-            else None
-        )
 
         to_wallet = get_object_or_404(Wallet, uuid=to_wallet_uuid, owner=request.user)
         balance = WalletBalanceService.get_balance(wallet)
@@ -366,7 +359,6 @@ def wallet_transfer_fast(request, uuid):
                 amount=amount,
                 description=description,
                 date=tx_date,
-                category=category,
             )
         except Exception as e:
             transactions = WalletTransactionService.list_transactions(wallet)
@@ -378,7 +370,6 @@ def wallet_transfer_fast(request, uuid):
                     "wallet": wallet,
                     "other_wallets": other_wallets,
                     "transactions": transactions,
-                    "categories": categories,
                     "balance": balance,
                     "error": str(e),
                 },
@@ -393,7 +384,6 @@ def wallet_transfer_fast(request, uuid):
                 "wallet": wallet,
                 "other_wallets": other_wallets,
                 "transactions": transactions,
-                "categories": categories,
                 "balance": balance,
             },
         )
@@ -401,7 +391,30 @@ def wallet_transfer_fast(request, uuid):
     return render(
         request,
         "wallet/transfer/_fast_form.html",
-        {"wallet": wallet, "other_wallets": other_wallets, "categories": categories},
+        {"wallet": wallet, "other_wallets": other_wallets},
+    )
+
+
+@login_required
+def transfer_update(request, wallet_uuid, uuid):
+    wallet = get_object_or_404(Wallet, uuid=wallet_uuid, owner=request.user)
+    transaction = get_object_or_404(Transaction, uuid=uuid, wallet=wallet)
+    transfer_group = transaction.transfer_group
+
+    if not transfer_group:
+        return HttpResponse(status=404)
+
+    if request.method == "POST":
+        description = request.POST.get("description", "")
+        TransferService.update_transfer_description(transfer_group, description)
+        response = HttpResponse()
+        response["HX-Redirect"] = reverse("wallet_detail", args=[wallet.uuid])
+        return response
+
+    return render(
+        request,
+        "wallet/transfer/_edit_form.html",
+        {"wallet": wallet, "transaction": transaction},
     )
 
 

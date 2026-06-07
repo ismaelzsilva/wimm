@@ -27,14 +27,5 @@
         <input type="date" name="date" class="input input-bordered input-sm"
                value="{% now 'Y-m-d' %}">
     </div>
-    <div class="form-control w-full lg:w-40">
-        <label class="label py-1"><span class="label-text text-xs">Category</span></label>
-        <select name="category" class="select select-bordered select-sm">
-            <option value="">None</option>
-            {% for cat in categories %}
-            <option value="{{ cat.uuid }}">{{ cat.name }}</option>
-            {% endfor %}
-        </select>
-    </div>
     <button type="submit" class="btn btn-primary btn-sm mt-1 lg:mt-0">Transfer</button>
 </form>

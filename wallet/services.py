@@ -196,7 +196,6 @@ class TransferService:
         amount: Decimal,
         description: str | None,
         date,
-        category: Category | None = None,
     ) -> TransferGroup:
         if from_wallet == to_wallet:
             raise ValidationError("Cannot transfer to the same wallet")
@@ -216,7 +215,6 @@ class TransferService:
                 description=description,
                 date=date,
                 transfer_group=group,
-                category=category,
             )
             Transaction.objects.create(
                 type=Transaction.Type.TRANSFER_IN,
@@ -225,10 +223,19 @@ class TransferService:
                 description=description,
                 date=date,
                 transfer_group=group,
-                category=category,
             )
 
         return group
+
+    @classmethod
+    def update_transfer_description(
+        cls, transfer_group: TransferGroup, description: str
+    ) -> TransferGroup:
+        with db_transaction.atomic():
+            for tx in transfer_group.transactions.all():
+                tx.description = description
+                tx.save(update_fields=["description"])
+        return transfer_group
 
     @classmethod
     def reverse_transfer(cls, transfer_group: TransferGroup) -> None:

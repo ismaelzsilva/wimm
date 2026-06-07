@@ -77,7 +77,13 @@
                                 Delete
                             </a>
                         {% else %}
-                            <span class="text-xs text-base-content/40">Transfer</span>
+                            <a href="{% url 'transfer_update' wallet.uuid tx.uuid %}"
+                               class="btn btn-ghost btn-xs"
+                               hx-get="{% url 'transfer_update' wallet.uuid tx.uuid %}"
+                               hx-target="#modal-content" hx-trigger="click"
+                               onclick="document.getElementById('modal').showModal()">
+                                Edit
+                            </a>
                         {% endif %}
                     </td>
                 </tr>

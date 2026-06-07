@@ -728,19 +728,17 @@ class TransferServiceTests(TestCase):
                 date=date.today(),
             )
 
-    def test_transfer_with_category(self):
-        cat = CategoryService.create_category(owner=self.user, name="Gift")
+    def test_transfer_sets_description(self):
         group = TransferService.transfer(
             from_wallet=self.from_wallet,
             to_wallet=self.to_wallet,
             balance=Decimal("200"),
             amount=Decimal("50"),
-            description="",
+            description="Gift",
             date=date.today(),
-            category=cat,
         )
         for tx in group.transactions.all():
-            self.assertEqual(tx.category, cat)
+            self.assertEqual(tx.description, "Gift")
 
     def test_transfer_can_be_negative(self):
         credit_wallet = WalletService.create_wallet(

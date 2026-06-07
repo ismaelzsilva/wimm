@@ -1,0 +1,17 @@
+<form method="post"
+      hx-post="{% url 'transfer_update' wallet.uuid transaction.uuid %}"
+      hx-target="body">
+    {% csrf_token %}
+    <h3 class="text-lg font-bold mb-4">Edit Transfer Description</h3>
+
+    <div class="form-control">
+        <label class="label" for="description"><span class="label-text">Description</span></label>
+        <input type="text" name="description" id="description" class="input input-bordered"
+               value="{{ transaction.description|default:'' }}" autofocus>
+    </div>
+
+    <div class="modal-action">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn" onclick="document.getElementById('modal').close()">Cancel</button>
+    </div>
+</form>
