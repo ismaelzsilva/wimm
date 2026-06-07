@@ -45,18 +45,11 @@ class WalletBalanceService:
 class WalletAnalyticsService:
     @classmethod
     def get_user_total_balance(cls, user) -> Decimal:
-        wallet_ids = Wallet.objects.filter(owner=user).values_list("uuid", flat=True)
-        credits = Transaction.objects.filter(
-            wallet_id__in=wallet_ids,
-            type__in=[Transaction.Type.INCOME, Transaction.Type.TRANSFER_IN],
-        ).aggregate(total=models.Sum("amount"))["total"] or Decimal("0.00")
-
-        debits = Transaction.objects.filter(
-            wallet_id__in=wallet_ids,
-            type__in=[Transaction.Type.EXPENSE, Transaction.Type.TRANSFER_OUT],
-        ).aggregate(total=models.Sum("amount"))["total"] or Decimal("0.00")
-
-        return credits - debits
+        wallets = Wallet.objects.filter(owner=user)
+        total = Decimal("0.00")
+        for wallet in wallets:
+            total += WalletBalanceService.get_balance(wallet)
+        return total
 
     @classmethod
     def get_spending_by_category(
