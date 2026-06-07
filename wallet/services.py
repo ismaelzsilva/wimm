@@ -68,9 +68,9 @@ class WalletAnalyticsService:
             qs = qs.filter(date__lte=date_to)
 
         return list(
-            qs.values("category__name").annotate(
-                total=models.Sum("amount")
-            ).order_by("-total")
+            qs.values("category__name")
+            .annotate(total=models.Sum("amount"))
+            .order_by("-total")
         )
 
     @classmethod
@@ -226,9 +226,7 @@ class WalletTransactionService:
         if category is not None:
             transaction.category = category
 
-        transaction.save(
-            update_fields=["amount", "description", "date", "category"]
-        )
+        transaction.save(update_fields=["amount", "description", "date", "category"])
         return transaction
 
 
