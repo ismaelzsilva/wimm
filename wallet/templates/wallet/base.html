@@ -29,6 +29,11 @@
             <ul class="menu menu-horizontal px-1">
                 <li><a href="{% url 'category_list' %}">Categories</a></li>
             </ul>
+            {% if user.is_staff %}
+                <ul class="menu menu-horizontal px-1">
+                    <li><a href="{% url 'admin:index' %}">Admin</a></li>
+                </ul>
+            {% endif %}
         </div>
         <div class="navbar-end gap-2">
             <span class="text-sm">{{ user.username }}</span>
@@ -52,6 +57,10 @@
                    @click="document.getElementById('nav-drawer').checked = false">Dashboard</a></li>
             <li><a href="{% url 'category_list' %}" class="text-base"
                    @click="document.getElementById('nav-drawer').checked = false">Categories</a></li>
+            {% if user.is_staff %}
+                <li><a href="{% url 'admin:index' %}" class="text-base"
+                       @click="document.getElementById('nav-drawer').checked = false">Admin</a></li>
+            {% endif %}
         </ul>
     </div>
     </div>
