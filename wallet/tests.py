@@ -9,6 +9,7 @@ from wallet.models import Category, Transaction, TransferGroup, Wallet
 from wallet.services import (
     CategoryService,
     TransferService,
+    WalletAnalyticsService,
     WalletBalanceService,
     WalletService,
     WalletTransactionService,
@@ -232,6 +233,156 @@ class WalletBalanceServiceTests(TestCase):
         self.assertEqual(
             WalletBalanceService.get_balance(self.wallet), Decimal("120")
         )
+
+    def test_get_user_total_balance(self):
+        other = WalletService.create_wallet(owner=self.user, name="Other")
+        WalletTransactionService.record_income(
+            wallet=self.wallet,
+            amount=Decimal("100"),
+            description="",
+            date=date.today(),
+        )
+        WalletTransactionService.record_income(
+            wallet=other,
+            amount=Decimal("50"),
+            description="",
+            date=date.today(),
+        )
+        total = WalletAnalyticsService.get_user_total_balance(self.user)
+        self.assertEqual(total, Decimal("150"))
+
+    def test_get_user_total_balance_no_wallets(self):
+        new_user = CustomUser.objects.create_user(
+            username="newuser", password="pass"
+        )
+        total = WalletAnalyticsService.get_user_total_balance(new_user)
+        self.assertEqual(total, Decimal("0.00"))
+
+    def test_get_user_total_balance_other_user_isolated(self):
+        other_user = CustomUser.objects.create_user(
+            username="other", password="pass"
+        )
+        other_wallet = WalletService.create_wallet(
+            owner=other_user, name="Other"
+        )
+        WalletTransactionService.record_income(
+            wallet=other_wallet,
+            amount=Decimal("999"),
+            description="",
+            date=date.today(),
+        )
+        total = WalletAnalyticsService.get_user_total_balance(self.user)
+        self.assertEqual(total, Decimal("0.00"))
+
+    def test_get_spending_by_category(self):
+        food = CategoryService.create_category(owner=self.user, name="Food")
+        transport = CategoryService.create_category(
+            owner=self.user, name="Transport"
+        )
+        WalletTransactionService.record_income(
+            wallet=self.wallet,
+            amount=Decimal("200"),
+            description="",
+            date=date.today(),
+        )
+        WalletTransactionService.record_expense(
+            wallet=self.wallet,
+            balance=Decimal("200"),
+            amount=Decimal("40"),
+            description="",
+            date=date.today(),
+            category=food,
+        )
+        WalletTransactionService.record_expense(
+            wallet=self.wallet,
+            balance=Decimal("160"),
+            amount=Decimal("20"),
+            description="",
+            date=date.today(),
+            category=transport,
+        )
+        WalletTransactionService.record_expense(
+            wallet=self.wallet,
+            balance=Decimal("140"),
+            amount=Decimal("30"),
+            description="",
+            date=date.today(),
+            category=food,
+        )
+        result = WalletAnalyticsService.get_spending_by_category(self.wallet)
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0]["category__name"], "Food")
+        self.assertEqual(result[0]["total"], Decimal("70"))
+        self.assertEqual(result[1]["category__name"], "Transport")
+        self.assertEqual(result[1]["total"], Decimal("20"))
+
+    def test_get_spending_by_category_date_range(self):
+        food = CategoryService.create_category(owner=self.user, name="Food")
+        WalletTransactionService.record_income(
+            wallet=self.wallet,
+            amount=Decimal("100"),
+            description="",
+            date=date.today(),
+        )
+        WalletTransactionService.record_expense(
+            wallet=self.wallet,
+            balance=Decimal("100"),
+            amount=Decimal("10"),
+            description="",
+            date=date(2025, 1, 1),
+            category=food,
+        )
+        WalletTransactionService.record_expense(
+            wallet=self.wallet,
+            balance=Decimal("90"),
+            amount=Decimal("20"),
+            description="",
+            date=date(2025, 2, 1),
+            category=food,
+        )
+        result = WalletAnalyticsService.get_spending_by_category(
+            self.wallet,
+            date_from=date(2025, 1, 15),
+            date_to=date(2025, 2, 15),
+        )
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["total"], Decimal("20"))
+
+    def test_get_monthly_summary(self):
+        WalletTransactionService.record_income(
+            wallet=self.wallet,
+            amount=Decimal("1000"),
+            description="",
+            date=date(2025, 6, 5),
+        )
+        WalletTransactionService.record_expense(
+            wallet=self.wallet,
+            balance=Decimal("1000"),
+            amount=Decimal("300"),
+            description="",
+            date=date(2025, 6, 10),
+        )
+        WalletTransactionService.record_expense(
+            wallet=self.wallet,
+            balance=Decimal("700"),
+            amount=Decimal("50"),
+            description="",
+            date=date(2025, 6, 15),
+        )
+        summary = WalletAnalyticsService.get_monthly_summary(
+            self.wallet, year=2025, month=6
+        )
+        self.assertEqual(summary["income"], Decimal("1000"))
+        self.assertEqual(summary["expense"], Decimal("350"))
+        self.assertEqual(summary["net"], Decimal("650"))
+
+    def test_get_monthly_summary_empty(self):
+        summary = WalletAnalyticsService.get_monthly_summary(
+            self.wallet, year=2025, month=1
+        )
+        self.assertEqual(summary["income"], Decimal("0.00"))
+        self.assertEqual(summary["expense"], Decimal("0.00"))
+        self.assertEqual(summary["net"], Decimal("0.00"))
 
 
 class WalletTransactionServiceTests(TestCase):
@@ -535,6 +686,94 @@ class WalletTransactionServiceTests(TestCase):
         CategoryService.delete_category(cat)
         tx = Transaction.objects.get(wallet=self.wallet)
         self.assertIsNone(tx.category)
+
+    def test_update_transaction_description(self):
+        tx = WalletTransactionService.record_income(
+            wallet=self.wallet,
+            amount=Decimal("100"),
+            description="Old",
+            date=date(2025, 1, 1),
+        )
+        WalletTransactionService.update_transaction(
+            tx, description="Updated"
+        )
+        tx.refresh_from_db()
+        self.assertEqual(tx.description, "Updated")
+        self.assertEqual(tx.amount, Decimal("100"))
+
+    def test_update_transaction_amount(self):
+        WalletTransactionService.record_income(
+            wallet=self.wallet,
+            amount=Decimal("200"),
+            description="",
+            date=date.today(),
+        )
+        tx = WalletTransactionService.record_expense(
+            wallet=self.wallet,
+            balance=Decimal("200"),
+            amount=Decimal("50"),
+            description="",
+            date=date.today(),
+        )
+        WalletTransactionService.update_transaction(tx, amount=Decimal("30"))
+        tx.refresh_from_db()
+        self.assertEqual(tx.amount, Decimal("30"))
+
+    def test_update_transaction_amount_insufficient_funds(self):
+        WalletTransactionService.record_income(
+            wallet=self.wallet,
+            amount=Decimal("100"),
+            description="",
+            date=date.today(),
+        )
+        tx = WalletTransactionService.record_expense(
+            wallet=self.wallet,
+            balance=Decimal("100"),
+            amount=Decimal("50"),
+            description="",
+            date=date.today(),
+        )
+        with self.assertRaises(ValidationError):
+            WalletTransactionService.update_transaction(
+                tx, amount=Decimal("200")
+            )
+
+    def test_update_transaction_date_and_category(self):
+        cat = CategoryService.create_category(owner=self.user, name="Food")
+        tx = WalletTransactionService.record_income(
+            wallet=self.wallet,
+            amount=Decimal("100"),
+            description="",
+            date=date(2025, 1, 1),
+        )
+        WalletTransactionService.update_transaction(
+            tx, date=date(2025, 6, 1), category=cat
+        )
+        tx.refresh_from_db()
+        self.assertEqual(tx.date, date(2025, 6, 1))
+        self.assertEqual(tx.category, cat)
+
+    def test_update_transfer_transaction_raises_error(self):
+        other = WalletService.create_wallet(owner=self.user, name="Other")
+        WalletTransactionService.record_income(
+            wallet=self.wallet,
+            amount=Decimal("100"),
+            description="",
+            date=date.today(),
+        )
+        group = TransferService.transfer(
+            from_wallet=self.wallet,
+            to_wallet=other,
+            balance=Decimal("100"),
+            amount=Decimal("50"),
+            description="",
+            date=date.today(),
+        )
+        tx = group.transactions.first()
+        with self.assertRaises(ValidationError):
+            WalletTransactionService.update_transaction(
+                tx, description="Nope"
+            )
 
 
 class TransferServiceTests(TestCase):
