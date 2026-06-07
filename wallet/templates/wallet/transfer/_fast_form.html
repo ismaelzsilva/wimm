@@ -1,0 +1,40 @@
+<form method="post"
+      hx-post="{% url 'wallet_transfer_fast' wallet.uuid %}"
+      hx-target="#wallet-content"
+      hx-swap="outerHTML"
+      class="flex flex-col lg:flex-row lg:items-end gap-2">
+    {% csrf_token %}
+    <div class="form-control flex-1">
+        <label class="label py-1"><span class="label-text text-xs">To Wallet</span></label>
+        <select name="to_wallet" class="select select-bordered select-sm" required>
+            <option value="">Select wallet</option>
+            {% for w in other_wallets %}
+            <option value="{{ w.uuid }}">{{ w.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-control w-full lg:w-28">
+        <label class="label py-1"><span class="label-text text-xs">Amount</span></label>
+        <input type="number" step="0.01" min="0.01" name="amount"
+               class="input input-bordered input-sm" placeholder="0.00" required>
+    </div>
+    <div class="form-control flex-1">
+        <label class="label py-1"><span class="label-text text-xs">Description</span></label>
+        <input type="text" name="description" class="input input-bordered input-sm" placeholder="Optional">
+    </div>
+    <div class="form-control w-full lg:w-36">
+        <label class="label py-1"><span class="label-text text-xs">Date</span></label>
+        <input type="date" name="date" class="input input-bordered input-sm"
+               value="{% now 'Y-m-d' %}">
+    </div>
+    <div class="form-control w-full lg:w-40">
+        <label class="label py-1"><span class="label-text text-xs">Category</span></label>
+        <select name="category" class="select select-bordered select-sm">
+            <option value="">None</option>
+            {% for cat in categories %}
+            <option value="{{ cat.uuid }}">{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm mt-1 lg:mt-0">Transfer</button>
+</form>

@@ -12,6 +12,7 @@ urlpatterns = [
     path("wallets/<uuid:uuid>/", views.wallet_detail, name="wallet_detail"),
     path("wallets/<uuid:uuid>/update/", views.wallet_update, name="wallet_update"),
     path("wallets/<uuid:uuid>/delete/", views.wallet_delete, name="wallet_delete"),
+    path("wallets/<uuid:uuid>/transfer/", views.wallet_transfer_fast, name="wallet_transfer_fast"),
     path(
         "wallets/<uuid:wallet_uuid>/transactions/create/",
         views.transaction_create,

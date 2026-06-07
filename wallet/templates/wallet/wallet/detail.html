@@ -23,34 +23,8 @@
         </div>
     </div>
 
-    <div class="stats shadow">
-        <div class="stat">
-            <div class="stat-title">Balance</div>
-            <div class="stat-value {% if balance < 0 %}text-error{% endif %}">
-                ${{ balance|floatformat:2 }}
-            </div>
-        </div>
-    </div>
-
-    <div class="flex flex-wrap gap-2 items-center">
-        <a href="{% url 'transaction_create' wallet.uuid %}?type=income"
-           class="btn btn-success btn-sm"
-           hx-get="{% url 'transaction_create' wallet.uuid %}?type=income"
-           hx-target="#modal-content" hx-trigger="click"
-           onclick="document.getElementById('modal').showModal()">
-            + Income
-        </a>
-        <a href="{% url 'transaction_create' wallet.uuid %}?type=expense"
-           class="btn btn-error btn-sm"
-           hx-get="{% url 'transaction_create' wallet.uuid %}?type=expense"
-           hx-target="#modal-content" hx-trigger="click"
-           onclick="document.getElementById('modal').showModal()">
-            + Expense
-        </a>
-    </div>
-
-    <div id="transaction-list">
-        {% include "wallet/transaction/_list.html" %}
+    <div id="wallet-content">
+        {% include "wallet/wallet/_content.html" %}
     </div>
 </div>
 

@@ -140,6 +140,7 @@ def wallet_detail(request, uuid):
     )
 
     categories = CategoryService.list_categories(request.user)
+    other_wallets = WalletService.list_wallets(request.user).exclude(uuid=wallet.uuid)
 
     if _is_htmx(request):
         return render(
@@ -161,6 +162,7 @@ def wallet_detail(request, uuid):
             "balance": balance,
             "transactions": transactions,
             "categories": categories,
+            "other_wallets": other_wallets,
         },
     )
 
@@ -397,6 +399,74 @@ def transfer_create(request):
         request,
         "wallet/transfer/_form.html",
         {"wallets": wallets, "categories": categories},
+    )
+
+
+@login_required
+def wallet_transfer_fast(request, uuid):
+    wallet = get_object_or_404(Wallet, uuid=uuid, owner=request.user)
+    other_wallets = WalletService.list_wallets(request.user).exclude(uuid=wallet.uuid)
+    categories = CategoryService.list_categories(request.user)
+
+    if request.method == "POST":
+        to_wallet_uuid = request.POST.get("to_wallet")
+        amount = Decimal(request.POST["amount"])
+        description = request.POST.get("description", "")
+        tx_date = request.POST.get("date", date.today())
+        category_uuid = request.POST.get("category")
+        category = (
+            get_object_or_404(Category, uuid=category_uuid, owner=request.user)
+            if category_uuid
+            else None
+        )
+
+        to_wallet = get_object_or_404(Wallet, uuid=to_wallet_uuid, owner=request.user)
+        balance = WalletBalanceService.get_balance(wallet)
+
+        try:
+            TransferService.transfer(
+                from_wallet=wallet,
+                to_wallet=to_wallet,
+                balance=balance,
+                amount=amount,
+                description=description,
+                date=tx_date,
+                category=category,
+            )
+        except Exception as e:
+            transactions = WalletTransactionService.list_transactions(wallet)
+            balance = WalletBalanceService.get_balance(wallet)
+            return render(
+                request,
+                "wallet/wallet/_content.html",
+                {
+                    "wallet": wallet,
+                    "other_wallets": other_wallets,
+                    "transactions": transactions,
+                    "categories": categories,
+                    "balance": balance,
+                    "error": str(e),
+                },
+            )
+
+        transactions = WalletTransactionService.list_transactions(wallet)
+        balance = WalletBalanceService.get_balance(wallet)
+        return render(
+            request,
+            "wallet/wallet/_content.html",
+            {
+                "wallet": wallet,
+                "other_wallets": other_wallets,
+                "transactions": transactions,
+                "categories": categories,
+                "balance": balance,
+            },
+        )
+
+    return render(
+        request,
+        "wallet/transfer/_fast_form.html",
+        {"wallet": wallet, "other_wallets": other_wallets, "categories": categories},
     )
 
 
