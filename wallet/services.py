@@ -42,6 +42,66 @@ class WalletBalanceService:
         return credits - debits
 
 
+class WalletAnalyticsService:
+    @classmethod
+    def get_user_total_balance(cls, user) -> Decimal:
+        wallet_ids = Wallet.objects.filter(owner=user).values_list("uuid", flat=True)
+        credits = Transaction.objects.filter(
+            wallet_id__in=wallet_ids,
+            type__in=[Transaction.Type.INCOME, Transaction.Type.TRANSFER_IN],
+        ).aggregate(total=models.Sum("amount"))["total"] or Decimal("0.00")
+
+        debits = Transaction.objects.filter(
+            wallet_id__in=wallet_ids,
+            type__in=[Transaction.Type.EXPENSE, Transaction.Type.TRANSFER_OUT],
+        ).aggregate(total=models.Sum("amount"))["total"] or Decimal("0.00")
+
+        return credits - debits
+
+    @classmethod
+    def get_spending_by_category(
+        cls,
+        wallet: Wallet,
+        date_from=None,
+        date_to=None,
+    ) -> list[dict]:
+        qs = Transaction.objects.filter(
+            wallet=wallet,
+            type=Transaction.Type.EXPENSE,
+        )
+        if date_from:
+            qs = qs.filter(date__gte=date_from)
+        if date_to:
+            qs = qs.filter(date__lte=date_to)
+
+        return list(
+            qs.values("category__name").annotate(
+                total=models.Sum("amount")
+            ).order_by("-total")
+        )
+
+    @classmethod
+    def get_monthly_summary(cls, wallet: Wallet, year: int, month: int) -> dict:
+        qs = Transaction.objects.filter(
+            wallet=wallet,
+            date__year=year,
+            date__month=month,
+        )
+        income = qs.filter(
+            type__in=[Transaction.Type.INCOME, Transaction.Type.TRANSFER_IN],
+        ).aggregate(total=models.Sum("amount"))["total"] or Decimal("0.00")
+
+        expense = qs.filter(
+            type__in=[Transaction.Type.EXPENSE, Transaction.Type.TRANSFER_OUT],
+        ).aggregate(total=models.Sum("amount"))["total"] or Decimal("0.00")
+
+        return {
+            "income": income,
+            "expense": expense,
+            "net": income - expense,
+        }
+
+
 class WalletTransactionService:
     @classmethod
     def record_income(
@@ -133,6 +193,50 @@ class WalletTransactionService:
                 )
 
         transaction.delete()
+
+    @classmethod
+    def update_transaction(
+        cls,
+        transaction: Transaction,
+        amount: Decimal | None = None,
+        description: str | None = None,
+        date=None,
+        category: Category | None = None,
+    ) -> Transaction:
+        if transaction.transfer_group_id:
+            raise ValidationError(
+                "Cannot edit a transfer transaction. "
+                "Reverse the transfer and create a new one instead."
+            )
+
+        if amount is not None and amount != transaction.amount:
+            if transaction.type in (
+                Transaction.Type.EXPENSE,
+                Transaction.Type.TRANSFER_OUT,
+            ):
+                balance_without = (
+                    WalletBalanceService.get_balance(transaction.wallet)
+                    + transaction.amount
+                )
+                if not transaction.wallet.can_be_negative and amount > balance_without:
+                    raise ValidationError(
+                        f"Insufficient funds. Balance without this transaction: "
+                        f"{balance_without}, new amount: {amount}"
+                    )
+
+        if amount is not None:
+            transaction.amount = amount
+        if description is not None:
+            transaction.description = description
+        if date is not None:
+            transaction.date = date
+        if category is not None:
+            transaction.category = category
+
+        transaction.save(
+            update_fields=["amount", "description", "date", "category"]
+        )
+        return transaction
 
 
 class TransferService:
