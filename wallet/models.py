@@ -10,6 +10,7 @@ User = get_user_model()
 class Wallet(BaseModel):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="wallets")
     name = models.CharField(max_length=255)
+    can_be_negative = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
