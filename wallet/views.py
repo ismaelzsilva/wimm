@@ -95,15 +95,6 @@ def dashboard(request):
 
 
 @login_required
-def wallet_list(request):
-    wallets = WalletService.list_wallets(request.user)
-    wallet_balances = [(w, WalletBalanceService.get_balance(w)) for w in wallets]
-    return render(
-        request, "wallet/wallet/list.html", {"wallet_balances": wallet_balances}
-    )
-
-
-@login_required
 def wallet_create(request):
     if request.method == "POST":
         name = request.POST["name"]
@@ -112,7 +103,7 @@ def wallet_create(request):
             owner=request.user, name=name, can_be_negative=can_be_negative
         )
         response = HttpResponse()
-        response["HX-Redirect"] = reverse("wallet_list")
+        response["HX-Redirect"] = reverse("dashboard")
         return response
 
     return render(request, "wallet/wallet/_form.html")
@@ -178,7 +169,7 @@ def wallet_update(request, uuid):
             wallet=wallet, name=name, can_be_negative=can_be_negative
         )
         response = HttpResponse()
-        response["HX-Redirect"] = reverse("wallet_list")
+        response["HX-Redirect"] = reverse("dashboard")
         return response
 
     return render(request, "wallet/wallet/_form.html", {"wallet": wallet})
@@ -198,7 +189,7 @@ def wallet_delete(request, uuid):
                 {"wallet": wallet, "error": str(e)},
             )
         response = HttpResponse()
-        response["HX-Redirect"] = reverse("wallet_list")
+        response["HX-Redirect"] = reverse("dashboard")
         return response
 
     return render(request, "wallet/wallet/_confirm_delete.html", {"wallet": wallet})
@@ -475,63 +466,4 @@ def category_delete(request, uuid):
     )
 
 
-@login_required
-def reports_index(request):
-    wallets = WalletService.list_wallets(request.user)
-    selected_wallet_uuid = request.GET.get("wallet")
-    selected_wallet = None
-    monthly_summary = None
-    spending = None
 
-    if selected_wallet_uuid:
-        selected_wallet = get_object_or_404(
-            Wallet, uuid=selected_wallet_uuid, owner=request.user
-        )
-        year = int(request.GET.get("year", date.today().year))
-        month = int(request.GET.get("month", date.today().month))
-        monthly_summary = WalletAnalyticsService.get_monthly_summary(
-            selected_wallet, year=year, month=month
-        )
-        spending = WalletAnalyticsService.get_spending_by_category(selected_wallet)
-
-    return render(
-        request,
-        "wallet/reports/index.html",
-        {
-            "wallets": wallets,
-            "selected_wallet": selected_wallet,
-            "monthly_summary": monthly_summary,
-            "spending": spending,
-            "months": range(1, 13),
-            "now": date.today(),
-        },
-    )
-
-
-@login_required
-def reports_monthly(request):
-    wallet_uuid = request.GET.get("wallet")
-    year = int(request.GET.get("year", date.today().year))
-    month = int(request.GET.get("month", date.today().month))
-
-    wallet = get_object_or_404(Wallet, uuid=wallet_uuid, owner=request.user)
-    summary = WalletAnalyticsService.get_monthly_summary(wallet, year=year, month=month)
-
-    return render(
-        request,
-        "wallet/reports/_monthly_summary.html",
-        {"summary": summary, "wallet": wallet, "year": year, "month": month},
-    )
-
-
-@login_required
-def reports_categories(request):
-    wallet_uuid = request.GET.get("wallet")
-    wallet = get_object_or_404(Wallet, uuid=wallet_uuid, owner=request.user)
-    spending = WalletAnalyticsService.get_spending_by_category(wallet)
-
-    return render(
-        request,
-        "wallet/reports/_spending.html",
-        {"spending": spending, "wallet": wallet},
-    )

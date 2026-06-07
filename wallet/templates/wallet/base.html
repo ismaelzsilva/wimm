@@ -26,9 +26,7 @@
                 </div>
                 <div class="navbar-center hidden lg:flex">
                     <ul class="menu menu-horizontal px-1">
-                        <li><a href="{% url 'wallet_list' %}">Wallets</a></li>
                         <li><a href="{% url 'category_list' %}">Categories</a></li>
-                        <li><a href="{% url 'reports_index' %}">Reports</a></li>
                     </ul>
                 </div>
                 <div class="navbar-end gap-2">
@@ -50,9 +48,7 @@
             <ul class="menu p-4 w-72 min-h-full bg-base-100 text-base-content shadow-xl">
                 <li class="menu-title text-lg mb-2">Navigation</li>
                 <li><a href="{% url 'dashboard' %}" class="text-base" @click="document.getElementById('nav-drawer').checked = false">Dashboard</a></li>
-                <li><a href="{% url 'wallet_list' %}" class="text-base" @click="document.getElementById('nav-drawer').checked = false">Wallets</a></li>
                 <li><a href="{% url 'category_list' %}" class="text-base" @click="document.getElementById('nav-drawer').checked = false">Categories</a></li>
-                <li><a href="{% url 'reports_index' %}" class="text-base" @click="document.getElementById('nav-drawer').checked = false">Reports</a></li>
             </ul>
         </div>
     </div>

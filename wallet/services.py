@@ -51,50 +51,6 @@ class WalletAnalyticsService:
             total += WalletBalanceService.get_balance(wallet)
         return total
 
-    @classmethod
-    def get_spending_by_category(
-        cls,
-        wallet: Wallet,
-        date_from=None,
-        date_to=None,
-    ) -> list[dict]:
-        qs = Transaction.objects.filter(
-            wallet=wallet,
-            type=Transaction.Type.EXPENSE,
-        )
-        if date_from:
-            qs = qs.filter(date__gte=date_from)
-        if date_to:
-            qs = qs.filter(date__lte=date_to)
-
-        return list(
-            qs.values("category__name")
-            .annotate(total=models.Sum("amount"))
-            .order_by("-total")
-        )
-
-    @classmethod
-    def get_monthly_summary(cls, wallet: Wallet, year: int, month: int) -> dict:
-        qs = Transaction.objects.filter(
-            wallet=wallet,
-            date__year=year,
-            date__month=month,
-        )
-        income = qs.filter(
-            type__in=[Transaction.Type.INCOME, Transaction.Type.TRANSFER_IN],
-        ).aggregate(total=models.Sum("amount"))["total"] or Decimal("0.00")
-
-        expense = qs.filter(
-            type__in=[Transaction.Type.EXPENSE, Transaction.Type.TRANSFER_OUT],
-        ).aggregate(total=models.Sum("amount"))["total"] or Decimal("0.00")
-
-        return {
-            "income": income,
-            "expense": expense,
-            "net": income - expense,
-        }
-
-
 class WalletTransactionService:
     @classmethod
     def record_income(
