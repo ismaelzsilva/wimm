@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator
 from django.db import models
 
 from wimm.base_models import BaseModel
@@ -12,3 +13,32 @@ class Wallet(BaseModel):
 
     def __str__(self):
         return self.name
+
+
+class TransferGroup(BaseModel):
+    pass
+
+
+class Transaction(BaseModel):
+    class Type(models.TextChoices):
+        INCOME = "income", "Income"
+        EXPENSE = "expense", "Expense"
+        TRANSFER_OUT = "transfer_out", "Transfer Out"
+        TRANSFER_IN = "transfer_in", "Transfer In"
+
+    type = models.CharField(max_length=20, choices=Type.choices)
+    wallet = models.ForeignKey(
+        Wallet, on_delete=models.CASCADE, related_name="transactions"
+    )
+    amount = models.DecimalField(
+        max_digits=12, decimal_places=2, validators=[MinValueValidator(0.01)]
+    )
+    description = models.CharField(max_length=500, blank=True)
+    date = models.DateField()
+    transfer_group = models.ForeignKey(
+        TransferGroup,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="transactions",
+    )

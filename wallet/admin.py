@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from wallet.models import Wallet
+from wallet.models import Wallet, Transaction, TransferGroup
 
 
 @admin.register(Wallet)
@@ -14,3 +14,13 @@ class WalletAdmin(admin.ModelAdmin):
     search_fields = ("name", "owner__username")
     list_filter = ("updated_at",)
     readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(Transaction)
+class TransactionAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(TransferGroup)
+class TransferGroupAdmin(admin.ModelAdmin):
+    pass
