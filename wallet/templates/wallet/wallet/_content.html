@@ -2,7 +2,7 @@
     {% if error %}
         <div class="alert alert-error text-sm">{{ error }}</div>
     {% endif %}
-    <div class="stats shadow">
+    <div class="stats shadow bg-base-100 border border-base-300">
         <div class="stat">
             <div class="stat-title">Balance</div>
             <div class="stat-value {% if balance < 0 %}text-error{% endif %}">
@@ -33,11 +33,17 @@
     </div>
 
     {% if other_wallets %}
-        <div class="card bg-base-100 shadow-sm">
-            <div class="card-body py-4">
-                <h3 class="card-title text-sm mb-2">Fast Transfer</h3>
-                {% include "wallet/transfer/_fast_form.html" %}
+
+        <div class="collapse collapse-arrow bg-base-100 border border-base-300 shadow">
+            <input type="checkbox"/>
+            <div class="collapse-title font-semibold">Transfer to other wallet</div>
+            <div class="collapse-content text-sm">
+                <div class="card-body p-1">
+                    <h3 class="card-title text-sm mb-2">Fast Transfer</h3>
+                    {% include "wallet/transfer/_fast_form.html" %}
+                </div>
             </div>
         </div>
+
     {% endif %}
 </div>
