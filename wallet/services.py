@@ -6,7 +6,7 @@ from django.db import models, transaction as db_transaction
 from .models import Transaction, TransferGroup, Wallet
 
 
-class WalletTransactionService:
+class WalletBalanceService:
     @classmethod
     def get_balance(cls, wallet: Wallet) -> Decimal:
         credits = Transaction.objects.filter(
@@ -21,6 +21,8 @@ class WalletTransactionService:
 
         return credits - debits
 
+
+class WalletTransactionService:
     @classmethod
     def record_income(
         cls, wallet: Wallet, amount: Decimal, description: str | None, date
@@ -35,10 +37,14 @@ class WalletTransactionService:
 
     @classmethod
     def record_expense(
-        cls, wallet: Wallet, amount: Decimal, description: str | None, date
+        cls,
+        wallet: Wallet,
+        balance: Decimal,
+        amount: Decimal,
+        description: str | None,
+        date,
     ) -> Transaction:
         if not wallet.can_be_negative:
-            balance = cls.get_balance(wallet)
             if amount > balance:
                 raise ValidationError(
                     f"Insufficient funds. Balance: {balance}, expense: {amount}"
@@ -59,6 +65,7 @@ class TransferService:
         cls,
         from_wallet: Wallet,
         to_wallet: Wallet,
+        balance: Decimal,
         amount: Decimal,
         description: str | None,
         date,
@@ -67,7 +74,6 @@ class TransferService:
             raise ValidationError("Cannot transfer to the same wallet")
 
         if not from_wallet.can_be_negative:
-            balance = WalletTransactionService.get_balance(from_wallet)
             if amount > balance:
                 raise ValidationError(
                     f"Insufficient funds in '{from_wallet.name}'. Balance: {balance}, transfer: {amount}"
