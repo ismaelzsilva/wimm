@@ -28,7 +28,6 @@ urlpatterns = [
         views.transaction_delete,
         name="transaction_delete",
     ),
-    path("transfer/", views.transfer_create, name="transfer_create"),
     path("categories/", views.category_list, name="category_list"),
     path("categories/create/", views.category_create, name="category_create"),
     path("categories/<uuid:uuid>/update/", views.category_update, name="category_update"),

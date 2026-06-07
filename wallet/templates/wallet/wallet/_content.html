@@ -28,6 +28,10 @@
         </a>
     </div>
 
+    <div id="transaction-list">
+        {% include "wallet/transaction/_list.html" %}
+    </div>
+
     {% if other_wallets %}
     <div class="card bg-base-100 shadow-sm">
         <div class="card-body py-4">
@@ -36,8 +40,4 @@
         </div>
     </div>
     {% endif %}
-
-    <div id="transaction-list">
-        {% include "wallet/transaction/_list.html" %}
-    </div>
 </div>

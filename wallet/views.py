@@ -347,62 +347,6 @@ def transaction_delete(request, wallet_uuid, uuid):
 
 
 @login_required
-def transfer_create(request):
-    wallets = WalletService.list_wallets(request.user)
-    categories = CategoryService.list_categories(request.user)
-
-    if request.method == "POST":
-        from_wallet_uuid = request.POST.get("from_wallet")
-        to_wallet_uuid = request.POST.get("to_wallet")
-        amount = Decimal(request.POST["amount"])
-        description = request.POST.get("description", "")
-        tx_date = request.POST.get("date", date.today())
-        category_uuid = request.POST.get("category")
-        category = (
-            get_object_or_404(Category, uuid=category_uuid, owner=request.user)
-            if category_uuid
-            else None
-        )
-
-        from_wallet = get_object_or_404(
-            Wallet, uuid=from_wallet_uuid, owner=request.user
-        )
-        to_wallet = get_object_or_404(Wallet, uuid=to_wallet_uuid, owner=request.user)
-        balance = WalletBalanceService.get_balance(from_wallet)
-
-        try:
-            TransferService.transfer(
-                from_wallet=from_wallet,
-                to_wallet=to_wallet,
-                balance=balance,
-                amount=amount,
-                description=description,
-                date=tx_date,
-                category=category,
-            )
-        except Exception as e:
-            return render(
-                request,
-                "wallet/transfer/_form.html",
-                {
-                    "wallets": wallets,
-                    "categories": categories,
-                    "error": str(e),
-                },
-            )
-
-        response = HttpResponse()
-        response["HX-Redirect"] = reverse("dashboard")
-        return response
-
-    return render(
-        request,
-        "wallet/transfer/_form.html",
-        {"wallets": wallets, "categories": categories},
-    )
-
-
-@login_required
 def wallet_transfer_fast(request, uuid):
     wallet = get_object_or_404(Wallet, uuid=uuid, owner=request.user)
     other_wallets = WalletService.list_wallets(request.user).exclude(uuid=wallet.uuid)
