@@ -29,13 +29,15 @@
             {% endfor %}
         </div>
 
-        <div>
-            <a href="{% url 'wallet_create' %}" class="btn btn-primary"
-               hx-get="{% url 'wallet_create' %}" hx-target="#modal-content"
-               hx-trigger="click" onclick="document.getElementById('modal').showModal()">
-                + New Wallet
-            </a>
-        </div>
+        {% if wallet_balances|length != 0 %}
+            <div>
+                <a href="{% url 'wallet_create' %}" class="btn btn-primary"
+                   hx-get="{% url 'wallet_create' %}" hx-target="#modal-content"
+                   hx-trigger="click" onclick="document.getElementById('modal').showModal()">
+                    + New Wallet
+                </a>
+            </div>
+        {% endif %}
     </div>
 
     <dialog id="modal" class="modal">
