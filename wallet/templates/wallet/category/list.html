@@ -19,44 +19,44 @@
         {% else %}
 
             <div class="overflow-x-auto">
-            <table class="table table-zebra">
-                <thead>
-                <tr>
-                    <th>Name</th>
-                    <th class="text-center">Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for category in categories %}
+                <table class="table table-zebra">
+                    <thead>
                     <tr>
-                        <td>{{ category.name }}</td>
-                        <td class="text-center">
-                            <a href="{% url 'category_update' category.uuid %}"
-                               class="btn btn-ghost btn-xs"
-                               hx-get="{% url 'category_update' category.uuid %}"
-                               hx-target="#modal-content" hx-trigger="click"
-                               onclick="document.getElementById('modal').showModal()">
-                                Edit
-                            </a>
-                            <a href="{% url 'category_delete' category.uuid %}"
-                               class="btn btn-ghost btn-xs text-error"
-                               hx-get="{% url 'category_delete' category.uuid %}"
-                               hx-target="#modal-content" hx-trigger="click"
-                               onclick="document.getElementById('modal').showModal()">
-                                Delete
-                            </a>
-                        </td>
+                        <th>Name</th>
+                        <th class="text-center">Actions</th>
                     </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="2" class="text-center py-8 text-base-content/40">No categories yet.</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    {% for category in categories %}
+                        <tr>
+                            <td>{{ category.name }}</td>
+                            <td class="text-center">
+                                <a href="{% url 'category_update' category.uuid %}"
+                                   class="btn btn-ghost btn-xs"
+                                   hx-get="{% url 'category_update' category.uuid %}"
+                                   hx-target="#modal-content" hx-trigger="click"
+                                   onclick="document.getElementById('modal').showModal()">
+                                    Edit
+                                </a>
+                                <a href="{% url 'category_delete' category.uuid %}"
+                                   class="btn btn-ghost btn-xs text-error"
+                                   hx-get="{% url 'category_delete' category.uuid %}"
+                                   hx-target="#modal-content" hx-trigger="click"
+                                   onclick="document.getElementById('modal').showModal()">
+                                    Delete
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="2" class="text-center py-8 text-base-content/40">No categories yet.</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
         {% endif %}
-        </div>
 
     </div>
 
