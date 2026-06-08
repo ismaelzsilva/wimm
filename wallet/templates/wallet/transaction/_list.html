@@ -84,6 +84,13 @@
                                onclick="document.getElementById('modal').showModal()">
                                 Edit
                             </a>
+                            <a href="{% url 'transfer_delete' wallet.uuid tx.uuid %}"
+                               class="btn btn-ghost btn-xs text-error"
+                               hx-get="{% url 'transfer_delete' wallet.uuid tx.uuid %}"
+                               hx-target="#modal-content" hx-trigger="click"
+                               onclick="document.getElementById('modal').showModal()">
+                                Delete
+                            </a>
                         {% endif %}
                     </td>
                 </tr>

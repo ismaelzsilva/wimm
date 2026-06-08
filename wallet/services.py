@@ -238,6 +238,47 @@ class TransferService:
         return transfer_group
 
     @classmethod
+    def update_transfer(
+        cls,
+        transfer_group: TransferGroup,
+        amount: Decimal | None = None,
+        description: str | None = None,
+        date=None,
+    ) -> TransferGroup:
+        transactions = list(transfer_group.transactions.select_related("wallet"))
+
+        if not transactions:
+            raise ValidationError("Transfer group has no transactions")
+
+        if amount is not None:
+            out_tx = next(
+                (t for t in transactions if t.type == Transaction.Type.TRANSFER_OUT),
+                None,
+            )
+            if out_tx:
+                balance_without = (
+                    WalletBalanceService.get_balance(out_tx.wallet)
+                    + out_tx.amount
+                )
+                if not out_tx.wallet.can_be_negative and amount > balance_without:
+                    raise ValidationError(
+                        f"Insufficient funds in '{out_tx.wallet.name}'. "
+                        f"Balance without this transfer: {balance_without}, new amount: {amount}"
+                    )
+
+        with db_transaction.atomic():
+            for tx in transactions:
+                if amount is not None:
+                    tx.amount = amount
+                if description is not None:
+                    tx.description = description
+                if date is not None:
+                    tx.date = date
+                tx.save(update_fields=["amount", "description", "date"])
+
+        return transfer_group
+
+    @classmethod
     def reverse_transfer(cls, transfer_group: TransferGroup) -> None:
         transactions = list(transfer_group.transactions.select_related("wallet"))
 

@@ -32,6 +32,11 @@ urlpatterns = [
         views.transfer_update,
         name="transfer_update",
     ),
+    path(
+        "wallets/<uuid:wallet_uuid>/transactions/<uuid:uuid>/delete-transfer/",
+        views.transfer_delete,
+        name="transfer_delete",
+    ),
     path("categories/", views.category_list, name="category_list"),
     path("categories/create/", views.category_create, name="category_create"),
     path("categories/<uuid:uuid>/update/", views.category_update, name="category_update"),

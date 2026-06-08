@@ -405,8 +405,28 @@ def transfer_update(request, wallet_uuid, uuid):
         return HttpResponse(status=404)
 
     if request.method == "POST":
+        amount = request.POST.get("amount")
         description = request.POST.get("description", "")
-        TransferService.update_transfer_description(transfer_group, description)
+        tx_date = request.POST.get("date")
+
+        try:
+            TransferService.update_transfer(
+                transfer_group=transfer_group,
+                amount=Decimal(amount) if amount else None,
+                description=description,
+                date=tx_date or None,
+            )
+        except Exception as e:
+            return render(
+                request,
+                "wallet/transfer/_edit_form.html",
+                {
+                    "wallet": wallet,
+                    "transaction": transaction,
+                    "error": str(e),
+                },
+            )
+
         response = HttpResponse()
         response["HX-Redirect"] = reverse("wallet_detail", args=[wallet.uuid])
         return response
@@ -414,6 +434,35 @@ def transfer_update(request, wallet_uuid, uuid):
     return render(
         request,
         "wallet/transfer/_edit_form.html",
+        {"wallet": wallet, "transaction": transaction},
+    )
+
+
+@login_required
+def transfer_delete(request, wallet_uuid, uuid):
+    wallet = get_object_or_404(Wallet, uuid=wallet_uuid, owner=request.user)
+    transaction = get_object_or_404(Transaction, uuid=uuid, wallet=wallet)
+    transfer_group = transaction.transfer_group
+
+    if not transfer_group:
+        return HttpResponse(status=404)
+
+    if request.method == "POST":
+        try:
+            TransferService.reverse_transfer(transfer_group)
+        except Exception as e:
+            return render(
+                request,
+                "wallet/transfer/_confirm_delete.html",
+                {"wallet": wallet, "transaction": transaction, "error": str(e)},
+            )
+        response = HttpResponse()
+        response["HX-Redirect"] = reverse("wallet_detail", args=[wallet.uuid])
+        return response
+
+    return render(
+        request,
+        "wallet/transfer/_confirm_delete.html",
         {"wallet": wallet, "transaction": transaction},
     )
 

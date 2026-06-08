@@ -1,0 +1,19 @@
+<form method="post"
+      hx-post="{% url 'transfer_delete' wallet.uuid transaction.uuid %}"
+      hx-target="body">
+    {% csrf_token %}
+    <h3 class="text-lg font-bold mb-4">Reverse Transfer</h3>
+    <p>Are you sure you want to reverse this transfer? Both the outgoing and incoming transactions will be removed.</p>
+    <div class="mt-2 p-3 bg-base-200 rounded-lg text-sm">
+        <p><strong>Amount:</strong> ${{ transaction.amount|floatformat:2 }}</p>
+        <p><strong>Description:</strong> {{ transaction.description|default:"—" }}</p>
+        <p><strong>Date:</strong> {{ transaction.date|date:"Y-m-d" }}</p>
+    </div>
+    {% if error %}
+    <div class="alert alert-error mt-4 text-sm">{{ error }}</div>
+    {% endif %}
+    <div class="modal-action">
+        <button type="submit" class="btn btn-error">Reverse Transfer</button>
+        <button type="button" class="btn" onclick="document.getElementById('modal').close()">Cancel</button>
+    </div>
+</form>
