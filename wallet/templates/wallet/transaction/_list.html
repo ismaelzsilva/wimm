@@ -46,7 +46,23 @@
             {% for tx in transactions %}
                 <tr>
                     <td>{{ tx.date|date:"y/m/d" }}</td>
-                    <td>{{ tx.description|default:"—" }}</td>
+                    <td>
+                        {% if tx.type == 'transfer_out' %}
+                            <span class="text-warning">→</span>
+                            {{ tx.transfer_counterpart.name }}
+                            {% if tx.description %}
+                                <span class="text-base-content/50">({{ tx.description }})</span>
+                            {% endif %}
+                        {% elif tx.type == 'transfer_in' %}
+                            <span class="text-info">←</span>
+                            {{ tx.transfer_counterpart.name }}
+                            {% if tx.description %}
+                                <span class="text-base-content/50">({{ tx.description }})</span>
+                            {% endif %}
+                        {% else %}
+                            {{ tx.description|default:"—" }}
+                        {% endif %}
+                    </td>
                     <td>
                         {% if tx.category %}
                             <span class="badge badge-ghost badge-sm">{{ tx.category.name }}</span>

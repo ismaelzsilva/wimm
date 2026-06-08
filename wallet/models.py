@@ -66,3 +66,10 @@ class Transaction(BaseModel):
         blank=True,
         related_name="transactions",
     )
+
+    @property
+    def transfer_counterpart(self):
+        if not self.transfer_group_id:
+            return None
+        counterpart = self.transfer_group.transactions.exclude(uuid=self.uuid).first()
+        return counterpart.wallet if counterpart else None
