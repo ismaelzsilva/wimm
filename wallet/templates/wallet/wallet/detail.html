@@ -15,26 +15,8 @@
         </div>
     </div>
 
-    <dialog id="wallet-modal" class="modal">
-        <div class="modal-box" id="wallet-modal-content">
-            {% include "wallet/wallet/_form.html" %}
-        </div>
-        <form method="dialog" class="modal-backdrop">
-            <button>close</button>
-        </form>
-    </dialog>
-
-    <dialog id="wallet-delete-modal" class="modal">
-        <div class="modal-box">
-            {% include "wallet/wallet/_confirm_delete.html" %}
-        </div>
-        <form method="dialog" class="modal-backdrop">
-            <button>close</button>
-        </form>
-    </dialog>
-
-    <dialog id="transaction-modal" class="modal">
-        <div class="modal-box" id="transaction-modal-content"></div>
+    <dialog id="modal" class="modal">
+        <div class="modal-box" id="modal-content"></div>
         <form method="dialog" class="modal-backdrop">
             <button>close</button>
         </form>
@@ -43,14 +25,16 @@
     <div class="flex flex-col gap-6 mt-6">
         <div class="flex items-center justify-between">
             <div class="flex gap-2">
-                <button class="btn btn-outline btn-sm"
-                        onclick="document.getElementById('wallet-modal').showModal()">
+                <a href="{% url 'wallet_update' wallet.uuid %}" class="btn btn-outline btn-sm"
+                   hx-get="{% url 'wallet_update' wallet.uuid %}" hx-target="#modal-content"
+                   hx-trigger="click" onclick="document.getElementById('modal').showModal()">
                     Edit
-                </button>
-                <button class="btn btn-outline btn-error btn-sm"
-                        onclick="document.getElementById('wallet-delete-modal').showModal()">
+                </a>
+                <a href="{% url 'wallet_delete' wallet.uuid %}" class="btn btn-outline btn-error btn-sm"
+                   hx-get="{% url 'wallet_delete' wallet.uuid %}" hx-target="#modal-content"
+                   hx-trigger="click" onclick="document.getElementById('modal').showModal()">
                     Delete
-                </button>
+                </a>
             </div>
         </div>
     </div>
