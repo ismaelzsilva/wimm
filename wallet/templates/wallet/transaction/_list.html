@@ -49,13 +49,15 @@
                     <td>
                         {% if tx.type == 'transfer_out' %}
                             <span class="text-warning">→</span>
-                            {{ tx.transfer_counterpart.name }}
+                            <a href="{% url 'wallet_detail' tx.transfer_counterpart.uuid %}"
+                               class="link link-hover">{{ tx.transfer_counterpart.name }}</a>
                             {% if tx.description %}
                                 <span class="text-base-content/50">({{ tx.description }})</span>
                             {% endif %}
                         {% elif tx.type == 'transfer_in' %}
                             <span class="text-info">←</span>
-                            {{ tx.transfer_counterpart.name }}
+                            <a href="{% url 'wallet_detail' tx.transfer_counterpart.uuid %}"
+                               class="link link-hover">{{ tx.transfer_counterpart.name }}</a>
                             {% if tx.description %}
                                 <span class="text-base-content/50">({{ tx.description }})</span>
                             {% endif %}
