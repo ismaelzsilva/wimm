@@ -28,6 +28,7 @@
         <div class="navbar-center hidden lg:flex">
             <ul class="menu menu-horizontal px-1">
                 <li><a href="{% url 'category_list' %}">Categories</a></li>
+                <li><a href="{% url 'import_csv' %}">Import CSV</a></li>
             </ul>
             {% if user.is_staff %}
                 <ul class="menu menu-horizontal px-1">
@@ -55,6 +56,7 @@
             <li class="menu-title text-lg mb-2">Navigation</li>
             <li><a href="{% url 'dashboard' %}" class="text-base drawer-close">Dashboard</a></li>
             <li><a href="{% url 'category_list' %}" class="text-base drawer-close">Categories</a></li>
+            <li><a href="{% url 'import_csv' %}" class="text-base drawer-close">Import CSV</a></li>
             {% if user.is_staff %}
                 <li><a href="{% url 'admin:index' %}" class="text-base drawer-close">Admin</a></li>
             {% endif %}

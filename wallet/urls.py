@@ -41,4 +41,5 @@ urlpatterns = [
     path("categories/create/", views.category_create, name="category_create"),
     path("categories/<uuid:uuid>/update/", views.category_update, name="category_update"),
     path("categories/<uuid:uuid>/delete/", views.category_delete, name="category_delete"),
+    path("import/", views.import_csv, name="import_csv"),
 ]

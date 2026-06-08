@@ -1,0 +1,163 @@
+{% extends "wallet/base.html" %}
+
+{% block title %}Import CSV{% endblock %}
+
+{% block content %}
+    <div class="flex flex-col gap-6">
+        <h1 class="text-2xl font-bold">Import from CSV</h1>
+
+        {% if created is not None %}
+            <div class="alert alert-success">
+                <span>{{ created }} transactions imported successfully.</span>
+            </div>
+            {% if skipped %}
+                <div class="alert alert-info">
+                    <span>{{ skipped }} duplicate transactions skipped (already exist).</span>
+                </div>
+            {% endif %}
+            {% if errors %}
+                <div class="alert alert-error">
+                    <ul>
+                        {% for error in errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        {% endif %}
+
+        {% if preview %}
+            {% if rows %}
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="confirm" value="1">
+
+                    <div class="flex flex-wrap gap-4 items-end mb-4">
+                        <div class="form-control w-full max-w-xs">
+                            <label class="label" for="wallet-select">
+                                <span class="label-text">Target wallet</span>
+                            </label>
+                            <select name="wallet" id="wallet-select" class="select select-bordered" required>
+                                <option value="" disabled selected>Select a wallet</option>
+                                {% for wallet in wallets %}
+                                    <option value="{{ wallet.uuid }}">{{ wallet.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label cursor-pointer gap-2">
+                                <span class="label-text">Deduct from wallet</span>
+                                <input type="checkbox" name="deduct" class="checkbox checkbox-primary" checked>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="table table-xs table-pin-rows">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <input type="checkbox" class="checkbox checkbox-sm" id="select-all" checked>
+                                    </th>
+                                    <th>Amount</th>
+                                    <th>Description</th>
+                                    <th>Date</th>
+                                    <th>Category</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in rows %}
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox" name="selected_rows" value="{{ row.index }}"
+                                                   class="checkbox checkbox-sm row-checkbox" checked>
+                                        </td>
+                                        <td>${{ row.amount }}</td>
+                                        <td>{{ row.description }}</td>
+                                        <td>{{ row.date }}</td>
+                                        <td>{{ row.category_name }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% if csv_categories %}
+                        <div class="divider">Category mapping</div>
+                        <div class="overflow-x-auto max-w-md">
+                            <table class="table table-xs">
+                                <thead>
+                                    <tr>
+                                        <th>CSV category</th>
+                                        <th>Map to</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for csv_cat in csv_categories %}
+                                        <tr>
+                                            <td>{{ csv_cat }}</td>
+                                            <td>
+                                                <select name="cat_map_{{ csv_cat }}" class="select select-bordered select-xs w-full">
+                                                    <option value="">— Import as "{{ csv_cat }}" —</option>
+                                                    {% for cat in categories %}
+                                                        <option value="{{ cat.uuid }}">{{ cat.name }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+
+                    <div class="mt-4 flex gap-2">
+                        <button type="submit" class="btn btn-primary">Import selected</button>
+                        <a href="{% url 'import_csv' %}" class="btn btn-ghost">Cancel</a>
+                        <span class="self-center text-sm text-base-content/60" id="selected-count">
+                            {{ rows|length }} rows selected
+                        </span>
+                    </div>
+                </form>
+            {% else %}
+                <div class="alert alert-success">
+                    <span>All rows have been imported.</span>
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" name="finish" value="1" class="btn btn-primary">Finish</button>
+                </form>
+            {% endif %}
+
+        {% elif not created and not preview %}
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-control w-full max-w-xs mb-4">
+                    <label class="label" for="file-input">
+                        <span class="label-text">Choose a CSV file</span>
+                    </label>
+                    <input type="file" name="file" id="file-input" class="file-input file-input-bordered w-full"
+                           accept=".csv" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Preview</button>
+            </form>
+        {% endif %}
+    </div>
+
+    <script>
+        document.getElementById('select-all')?.addEventListener('change', function () {
+            document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = this.checked);
+            updateCount();
+        });
+
+        document.querySelectorAll('.row-checkbox')?.forEach(cb => {
+            cb.addEventListener('change', updateCount);
+        });
+
+        function updateCount() {
+            const count = document.querySelectorAll('.row-checkbox:checked').length;
+            const el = document.getElementById('selected-count');
+            if (el) el.textContent = count + ' rows selected';
+        }
+    </script>
+{% endblock %}

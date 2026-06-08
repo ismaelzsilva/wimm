@@ -1,3 +1,4 @@
+import csv
 from datetime import date
 from decimal import Decimal
 
@@ -546,4 +547,156 @@ def category_delete(request, uuid):
 
     return render(
         request, "wallet/category/_confirm_delete.html", {"category": category}
+    )
+
+
+@login_required
+def import_csv(request):
+    wallets = WalletService.list_wallets(request.user)
+
+    if request.method == "POST" and request.FILES.get("file"):
+        csv_file = request.FILES["file"]
+        categories = CategoryService.list_categories(request.user)
+        category_names = {c.name for c in categories}
+
+        rows = []
+        reader = csv.DictReader(csv_file.read().decode("utf-8-sig").splitlines(), delimiter=";")
+        for i, row in enumerate(reader):
+            rows.append(
+                {
+                    "index": i,
+                    "amount": row.get("Total", "").strip(),
+                    "description": row.get("Description", "").strip(),
+                    "date": row.get("When", "").strip(),
+                    "category_name": row.get("Category", "").strip(),
+                }
+            )
+
+        csv_categories = sorted({r["category_name"] for r in rows if r["category_name"]})
+
+        request.session["import_rows"] = rows
+        request.session["import_category_names"] = list(category_names)
+
+        return render(
+            request,
+            "wallet/import_csv.html",
+            {
+                "rows": rows,
+                "wallets": wallets,
+                "categories": categories,
+                "csv_categories": csv_categories,
+                "preview": True,
+            },
+        )
+
+    if request.method == "POST" and request.POST.get("confirm"):
+        rows = request.session.get("import_rows", [])
+        category_names = set(request.session.get("import_category_names", []))
+        wallet_uuid = request.POST.get("wallet")
+        wallet = get_object_or_404(Wallet, uuid=wallet_uuid, owner=request.user)
+        selected_indices = set(request.POST.getlist("selected_rows"))
+        deduct = request.POST.get("deduct") == "on"
+
+        category_map = {}
+        for key, value in request.POST.items():
+            if key.startswith("cat_map_"):
+                csv_cat = key.removeprefix("cat_map_")
+                if value:
+                    category_map[csv_cat] = get_object_or_404(
+                        Category, uuid=value, owner=request.user
+                    )
+
+        created = 0
+        skipped = 0
+        errors = []
+        remaining = []
+
+        for row in rows:
+            if str(row["index"]) not in selected_indices:
+                remaining.append(row)
+                continue
+
+            cat_name = row["category_name"]
+            category = category_map.get(cat_name)
+            if not category and cat_name:
+                if cat_name not in category_names:
+                    category = CategoryService.create_category(
+                        owner=request.user, name=cat_name
+                    )
+                    category_names.add(cat_name)
+                else:
+                    category = Category.objects.get(
+                        owner=request.user, name=cat_name
+                    )
+
+            try:
+                amount = Decimal(row["amount"])
+                tx_date = row["date"]
+
+                duplicate = Transaction.objects.filter(
+                    wallet=wallet,
+                    amount=amount,
+                    description=row["description"],
+                    date=tx_date,
+                    category=category,
+                ).exists()
+
+                if duplicate:
+                    skipped += 1
+                    continue
+
+                if deduct:
+                    WalletTransactionService.record_expense(
+                        wallet=wallet,
+                        balance=WalletBalanceService.get_balance(wallet),
+                        amount=amount,
+                        description=row["description"],
+                        date=tx_date,
+                        category=category,
+                    )
+                else:
+                    WalletTransactionService.record_income(
+                        wallet=wallet,
+                        amount=amount,
+                        description=row["description"],
+                        date=tx_date,
+                        category=category,
+                    )
+                created += 1
+            except Exception as e:
+                errors.append(f"Row {row['index'] + 2}: {e}")
+                remaining.append(row)
+
+        request.session["import_rows"] = remaining
+        request.session["import_category_names"] = list(category_names)
+
+        categories = CategoryService.list_categories(request.user)
+        csv_categories = sorted({r["category_name"] for r in remaining if r["category_name"]})
+
+        return render(
+            request,
+            "wallet/import_csv.html",
+            {
+                "rows": remaining,
+                "wallets": wallets,
+                "categories": categories,
+                "csv_categories": csv_categories,
+                "preview": True,
+                "created": created,
+                "skipped": skipped,
+                "errors": errors,
+            },
+        )
+
+    if request.method == "POST" and request.POST.get("finish"):
+        request.session.pop("import_rows", None)
+        request.session.pop("import_category_names", None)
+        return HttpResponseRedirect(reverse("dashboard"))
+
+    return render(
+        request,
+        "wallet/import_csv.html",
+        {
+            "wallets": wallets,
+        },
     )
