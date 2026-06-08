@@ -6,6 +6,6 @@
     <p>Are you sure you want to delete <strong>{{ category.name }}</strong>?</p>
     <div class="modal-action">
         <button type="submit" class="btn btn-error">Delete</button>
-        <button type="button" class="btn" onclick="document.getElementById('modal').close()">Cancel</button>
+        <button type="button" class="btn" onclick="this.closest('dialog').close()">Cancel</button>
     </div>
 </form>

@@ -15,15 +15,15 @@
         <a href="{% url 'transaction_create' wallet.uuid %}?type=income"
            class="btn btn-success btn-sm grow"
            hx-get="{% url 'transaction_create' wallet.uuid %}?type=income"
-           hx-target="#modal-content" hx-trigger="click"
-           onclick="document.getElementById('modal').showModal()">
+           hx-target="#transaction-modal-content" hx-trigger="click"
+           onclick="document.getElementById('transaction-modal').showModal()">
             + Income
         </a>
         <a href="{% url 'transaction_create' wallet.uuid %}?type=expense"
            class="btn btn-error btn-sm grow"
            hx-get="{% url 'transaction_create' wallet.uuid %}?type=expense"
-           hx-target="#modal-content" hx-trigger="click"
-           onclick="document.getElementById('modal').showModal()">
+           hx-target="#transaction-modal-content" hx-trigger="click"
+           onclick="document.getElementById('transaction-modal').showModal()">
             + Expense
         </a>
     </div>

@@ -65,23 +65,23 @@
                             <a href="{% url 'transaction_update' wallet.uuid tx.uuid %}"
                                class="btn btn-ghost btn-xs"
                                hx-get="{% url 'transaction_update' wallet.uuid tx.uuid %}"
-                               hx-target="#modal-content" hx-trigger="click"
-                               onclick="document.getElementById('modal').showModal()">
+                               hx-target="#transaction-modal-content" hx-trigger="click"
+                               onclick="document.getElementById('transaction-modal').showModal()">
                                 Edit
                             </a>
                             <a href="{% url 'transaction_delete' wallet.uuid tx.uuid %}"
                                class="btn btn-ghost btn-xs text-error"
                                hx-get="{% url 'transaction_delete' wallet.uuid tx.uuid %}"
-                               hx-target="#modal-content" hx-trigger="click"
-                               onclick="document.getElementById('modal').showModal()">
+                               hx-target="#transaction-modal-content" hx-trigger="click"
+                               onclick="document.getElementById('transaction-modal').showModal()">
                                 Delete
                             </a>
                         {% else %}
                             <a href="{% url 'transfer_update' wallet.uuid tx.uuid %}"
                                class="btn btn-ghost btn-xs"
                                hx-get="{% url 'transfer_update' wallet.uuid tx.uuid %}"
-                               hx-target="#modal-content" hx-trigger="click"
-                               onclick="document.getElementById('modal').showModal()">
+                               hx-target="#transaction-modal-content" hx-trigger="click"
+                               onclick="document.getElementById('transaction-modal').showModal()">
                                 Edit
                             </a>
                         {% endif %}
