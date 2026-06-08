@@ -130,6 +130,23 @@ def wallet_detail(request, uuid):
         category=category,
     )
 
+    expense_breakdown = WalletTransactionService.get_category_breakdown(
+        wallet=wallet,
+        type=tx_type,
+        date_from=date_from or None,
+        date_to=date_to or None,
+        category=category,
+    )
+
+    income_breakdown = WalletTransactionService.get_category_breakdown(
+        wallet=wallet,
+        types=[Transaction.Type.INCOME, Transaction.Type.TRANSFER_IN],
+        type=tx_type,
+        date_from=date_from or None,
+        date_to=date_to or None,
+        category=category,
+    )
+
     categories = CategoryService.list_categories(request.user)
     other_wallets = WalletService.list_wallets(request.user).exclude(uuid=wallet.uuid)
 
@@ -142,6 +159,8 @@ def wallet_detail(request, uuid):
                 "transactions": transactions,
                 "categories": categories,
                 "balance": balance,
+                "expense_breakdown": expense_breakdown,
+                "income_breakdown": income_breakdown,
             },
         )
 
@@ -154,6 +173,8 @@ def wallet_detail(request, uuid):
             "transactions": transactions,
             "categories": categories,
             "other_wallets": other_wallets,
+            "expense_breakdown": expense_breakdown,
+            "income_breakdown": income_breakdown,
         },
     )
 

@@ -2,6 +2,8 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction as db_transaction
+from django.db.models.functions import Coalesce
+from django.db.models import Case, Value, When
 
 from .models import Category, Transaction, TransferGroup, Wallet
 
@@ -50,6 +52,7 @@ class WalletAnalyticsService:
         for wallet in wallets:
             total += WalletBalanceService.get_balance(wallet)
         return total
+
 
 class WalletTransactionService:
     @classmethod
@@ -120,6 +123,54 @@ class WalletTransactionService:
             qs = qs.filter(category=category)
 
         return qs
+
+    @classmethod
+    def get_category_breakdown(
+        cls,
+        wallet: Wallet,
+        types: list | None = None,
+        **filters,
+    ) -> list[dict]:
+        if types is None:
+            types = [Transaction.Type.EXPENSE, Transaction.Type.TRANSFER_OUT]
+
+        qs = Transaction.objects.filter(wallet=wallet, type__in=types)
+
+        type_filter = filters.get("type")
+        date_from = filters.get("date_from")
+        date_to = filters.get("date_to")
+        category_filter = filters.get("category")
+
+        if type_filter:
+            qs = qs.filter(type=type_filter)
+        if date_from:
+            qs = qs.filter(date__gte=date_from)
+        if date_to:
+            qs = qs.filter(date__lte=date_to)
+        if category_filter:
+            qs = qs.filter(category=category_filter)
+
+        rows = (
+            qs.annotate(
+                category_name=Case(
+                    When(
+                        type__in=[
+                            Transaction.Type.TRANSFER_OUT,
+                            Transaction.Type.TRANSFER_IN,
+                        ],
+                        then=Value("Transfer"),
+                    ),
+                    default=Coalesce(
+                        models.F("category__name"), Value("Uncategorized")
+                    ),
+                )
+            )
+            .values("category_name")
+            .annotate(total=models.Sum("amount"))
+            .order_by("-total")
+        )
+
+        return list(rows)
 
     @classmethod
     def delete_transaction(cls, transaction: Transaction) -> None:
@@ -257,8 +308,7 @@ class TransferService:
             )
             if out_tx:
                 balance_without = (
-                    WalletBalanceService.get_balance(out_tx.wallet)
-                    + out_tx.amount
+                    WalletBalanceService.get_balance(out_tx.wallet) + out_tx.amount
                 )
                 if not out_tx.wallet.can_be_negative and amount > balance_without:
                     raise ValidationError(
