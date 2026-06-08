@@ -28,12 +28,12 @@
                 <a href="{% url 'wallet_update' wallet.uuid %}" class="btn btn-outline btn-sm"
                    hx-get="{% url 'wallet_update' wallet.uuid %}" hx-target="#modal-content"
                    hx-trigger="click" onclick="document.getElementById('modal').showModal()">
-                    Edit
+                    Edit wallet
                 </a>
                 <a href="{% url 'wallet_delete' wallet.uuid %}" class="btn btn-outline btn-error btn-sm"
                    hx-get="{% url 'wallet_delete' wallet.uuid %}" hx-target="#modal-content"
                    hx-trigger="click" onclick="document.getElementById('modal').showModal()">
-                    Delete
+                    Delete wallet
                 </a>
             </div>
         </div>
