@@ -3,57 +3,67 @@
 {% block title %}Categories{% endblock %}
 
 {% block content %}
-<div class="flex flex-col gap-6">
-    <div class="flex items-center justify-between">
-        <h1 class="text-3xl font-bold">Categories</h1>
-        <a href="{% url 'category_create' %}" class="btn btn-primary"
-           hx-get="{% url 'category_create' %}" hx-target="#modal-content"
-           hx-trigger="click" onclick="document.getElementById('modal').showModal()">
-            + New Category
-        </a>
-    </div>
+    <div class="flex flex-col gap-6">
 
-    <div class="overflow-x-auto">
-        <table class="table table-zebra">
-            <thead>
+        {% if categories|length == 0 %}
+
+            <div class="text-center text-base-content/60">
+                <p class="text-lg">No categories yet.</p>
+                <a href="{% url 'category_create' %}" class="btn btn-primary mt-4"
+                   hx-get="{% url 'category_create' %}" hx-target="#modal-content"
+                   hx-trigger="click" onclick="document.getElementById('modal').showModal()">
+                    Create your first category
+                </a>
+            </div>
+
+        {% else %}
+
+            <div class="overflow-x-auto">
+            <table class="table table-zebra">
+                <thead>
                 <tr>
                     <th>Name</th>
                     <th class="text-center">Actions</th>
                 </tr>
-            </thead>
-            <tbody>
+                </thead>
+                <tbody>
                 {% for category in categories %}
-                <tr>
-                    <td>{{ category.name }}</td>
-                    <td class="text-center">
-                        <a href="{% url 'category_update' category.uuid %}"
-                           class="btn btn-ghost btn-xs"
-                           hx-get="{% url 'category_update' category.uuid %}"
-                           hx-target="#modal-content" hx-trigger="click"
-                           onclick="document.getElementById('modal').showModal()">
-                            Edit
-                        </a>
-                        <a href="{% url 'category_delete' category.uuid %}"
-                           class="btn btn-ghost btn-xs text-error"
-                           hx-get="{% url 'category_delete' category.uuid %}"
-                           hx-target="#modal-content" hx-trigger="click"
-                           onclick="document.getElementById('modal').showModal()">
-                            Delete
-                        </a>
-                    </td>
-                </tr>
+                    <tr>
+                        <td>{{ category.name }}</td>
+                        <td class="text-center">
+                            <a href="{% url 'category_update' category.uuid %}"
+                               class="btn btn-ghost btn-xs"
+                               hx-get="{% url 'category_update' category.uuid %}"
+                               hx-target="#modal-content" hx-trigger="click"
+                               onclick="document.getElementById('modal').showModal()">
+                                Edit
+                            </a>
+                            <a href="{% url 'category_delete' category.uuid %}"
+                               class="btn btn-ghost btn-xs text-error"
+                               hx-get="{% url 'category_delete' category.uuid %}"
+                               hx-target="#modal-content" hx-trigger="click"
+                               onclick="document.getElementById('modal').showModal()">
+                                Delete
+                            </a>
+                        </td>
+                    </tr>
                 {% empty %}
-                <tr>
-                    <td colspan="2" class="text-center py-8 text-base-content/40">No categories yet.</td>
-                </tr>
+                    <tr>
+                        <td colspan="2" class="text-center py-8 text-base-content/40">No categories yet.</td>
+                    </tr>
                 {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
+                </tbody>
+            </table>
 
-<dialog id="modal" class="modal">
-    <div class="modal-box" id="modal-content"></div>
-    <form method="dialog" class="modal-backdrop"><button>close</button></form>
-</dialog>
+        {% endif %}
+        </div>
+
+    </div>
+
+    <dialog id="modal" class="modal">
+        <div class="modal-box" id="modal-content"></div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
 {% endblock %}
